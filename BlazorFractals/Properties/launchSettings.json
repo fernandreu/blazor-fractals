@@ -3,7 +3,7 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:49398",
+      "applicationUrl": "http://localhost:49398/blazor-fractals",
       "sslPort": 44341
     }
   },

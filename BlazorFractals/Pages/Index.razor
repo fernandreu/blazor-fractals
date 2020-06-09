@@ -1,7 +1,55 @@
 ﻿@page "/"
+@using System.IO
+@using SixLabors.ImageSharp
+@using SixLabors.ImageSharp.PixelFormats
 
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
 
 <SurveyPrompt Title="How is Blazor working for you?" />
+
+<div class="row">
+    <input class="form-control col-2" @bind="_widthString" />
+    <input class="form-control col-2" @bind="_heightString" />
+    <input class="form-control col-2" @bind="_color" />
+    <button class="btn btn-primary col-2" @onclick="GenerateImageAsync">Generate Image</button>
+</div>
+
+@if (_data != null)
+{
+    <div class="row">
+        <img src="@($"data:image/png;base64,{Convert.ToBase64String(_data)}")" />
+    </div>
+}
+
+@code
+{
+    string _widthString = "2000";
+
+    string _heightString = "2000";
+
+    string _color = "#123456";
+
+    byte[] _data;
+
+    private async Task GenerateImageAsync()
+    {
+        Console.WriteLine($"IsHardwareAccelerated: {System.Numerics.Vector.IsHardwareAccelerated}");
+
+        if (!int.TryParse(_widthString, out var width))
+        {
+            width = 500;
+        }
+
+        if (!int.TryParse(_heightString, out var height))
+        {
+            height = 500;
+        }
+
+        using var image = new Image<Rgba32>(width, height, Rgba32.ParseHex(_color));
+        await using var ms = new MemoryStream();
+        image.SaveAsPng(ms);
+        _data = ms.ToArray();
+    }
+}
