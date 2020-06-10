@@ -24,5 +24,17 @@ namespace ApplicationCore.Maths
 
             return NegateIfNeeded(result);
         }
+
+        public override string ToString(string variableName)
+        {
+            
+            var result = string.Join('+', Terms.Select(x => $"({x.ToString(variableName)})"));
+            if (IsNegative)
+            {
+                result = $"-({result})";
+            }
+
+            return result;
+        }
     }
 }

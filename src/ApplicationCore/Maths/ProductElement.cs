@@ -24,5 +24,11 @@ namespace ApplicationCore.Maths
 
             return NegateIfNeeded(result);
         }
+
+        public override string ToString(string variableName)
+        {
+            var result = string.Join('*', Factors.Select(x => $"({x.ToString(variableName)})"));
+            return $"{(IsNegative ? "-" : "")}{result}";
+        }
     }
 }

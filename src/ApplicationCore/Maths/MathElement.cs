@@ -18,6 +18,10 @@ namespace ApplicationCore.Maths
             return Expression.Lambda<Func<Complex, Complex>>(body, parameter);
         }
 
+        public override string ToString() => ToString("z");
+
+        public abstract string ToString(string variableName);
+
         private static readonly IDictionary<string, Func<Stack<MathElement>, bool>> Cache = new Dictionary<string, Func<Stack<MathElement>, bool>>
         {
             ["^"] = Process((b, e) => new PowerElement(b, e)),

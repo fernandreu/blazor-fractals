@@ -8,6 +8,11 @@ namespace CoreTests
 {
     public class MathTests
     {
+        private static void AssertEqual(Complex expected, Complex actual, double tolerance = 1e-3)
+        {
+            Assert.That(actual, Is.EqualTo(expected).Using<Complex>((a, b) => Complex.Abs(a - b) < tolerance));
+        }
+
         public static IEnumerable CanParseExpressionData
         {
             get
@@ -18,13 +23,8 @@ namespace CoreTests
             }
         }
 
-        private static void AssertEqual(Complex expected, Complex actual, double tolerance = 1e-3)
-        {
-            Assert.That(actual, Is.EqualTo(expected).Using<Complex>((a, b) => Complex.Abs(a - b) < tolerance));
-        }
-
         [TestCaseSource(nameof(CanParseExpressionData))]
-        public void CanParseExpression(string expression, Complex argument, Complex expected)
+        public void CanEvaluateExpression(string expression, Complex argument, Complex expected)
         {
             // Arrange
             var element = MathElement.Parse(expression);
@@ -36,6 +36,15 @@ namespace CoreTests
 
             // Assert
             AssertEqual(expected, actual);
+        }
+
+        [TestCase("2+z", ExpectedResult = "(2)+(z)")]
+        [TestCase("2+3*z", ExpectedResult = "(2)+((3)*(z))")]
+        [TestCase("-sin(z)", ExpectedResult = "-sin(z)")]
+        public string CanFormatExpression(string expression)
+        {
+            var element = MathElement.Parse(expression);
+            return element.ToString();
         }
     }
 }
