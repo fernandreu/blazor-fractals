@@ -23,5 +23,10 @@ namespace ApplicationCore.Maths
             var result = Expression.Call(Method, Base.ToExpression(parameter), Exponent.ToExpression(parameter));
             return NegateIfNeeded(result);
         }
+
+        public override string ToString(string variableName)
+        {
+            return $"{(IsNegative ? "-" : "")}({Base.ToString(variableName)})^({Exponent.ToString(variableName)})";
+        }
     }
 }

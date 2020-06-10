@@ -15,5 +15,8 @@ namespace ApplicationCore.Maths
         {
             return NegateIfNeeded(parameter);
         }
+        
+        public override string ToString(string variableName)
+            => $"{(IsNegative ? "-" : "")}{variableName}";
     }
 }

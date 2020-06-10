@@ -20,5 +20,8 @@ namespace ApplicationCore.Maths
             var result = Expression.Call(Method, Argument.ToExpression(parameter));
             return NegateIfNeeded(result);
         }
+        
+        public override string ToString(string variableName)
+            => $"{(IsNegative ? "-" : "")}log({Argument.ToString(variableName)})";
     }
 }

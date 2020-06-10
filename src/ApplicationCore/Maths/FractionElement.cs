@@ -19,5 +19,10 @@ namespace ApplicationCore.Maths
             var result = Expression.Divide(Numerator.ToExpression(parameter), Denominator.ToExpression(parameter));
             return NegateIfNeeded(result);
         }
+
+        public override string ToString(string variableName)
+        {
+            return $"{(IsNegative ? "-" : "")}({Numerator.ToString(variableName)})/({Denominator.ToString(variableName)})";
+        }
     }
 }
