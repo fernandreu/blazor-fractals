@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text;
 
 namespace ApplicationCore.Maths
 {
@@ -27,8 +28,19 @@ namespace ApplicationCore.Maths
 
         public override string ToString(string variableName)
         {
+            var parts = Terms.Select((term, index) =>
+            {
+                var str = term.ToString(variableName);
+                if (!term.IsNegative && index > 0)
+                {
+                    str = "+" + str;
+                }
+
+                // Negative terms should already have extra brackets if needed (e.g. '-(2+3)')
+                return str;
+            });
             
-            var result = string.Join('+', Terms.Select(x => $"({x.ToString(variableName)})"));
+            var result = string.Join(string.Empty, parts);
             if (IsNegative)
             {
                 result = $"-({result})";

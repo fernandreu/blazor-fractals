@@ -38,9 +38,10 @@ namespace CoreTests
             AssertEqual(expected, actual);
         }
 
-        [TestCase("2+z", ExpectedResult = "(2)+(z)")]
-        [TestCase("2+3*z", ExpectedResult = "(2)+((3)*(z))")]
+        [TestCase("2+z", ExpectedResult = "2+z")]
+        [TestCase("2+3*z", ExpectedResult = "2+(3)*(z)")]
         [TestCase("-sin(z)", ExpectedResult = "-sin(z)")]
+        [TestCase("2-z", ExpectedResult = "2-z")]
         public string CanFormatExpression(string expression)
         {
             var element = MathElement.Parse(expression);
