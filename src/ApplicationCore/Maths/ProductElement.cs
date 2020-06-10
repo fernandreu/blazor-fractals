@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace ApplicationCore.Maths
 {
@@ -11,5 +12,17 @@ namespace ApplicationCore.Maths
         }
 
         public IReadOnlyList<MathElement> Factors { get; }
+
+        protected internal override Expression ToExpression(ParameterExpression parameter)
+        {
+            var factors = Factors.Select(x => x.ToExpression(parameter)).ToList();
+            var result = factors[0];
+            foreach (var factor in factors.Skip(1))
+            {
+                result = Expression.Multiply(result, factor);
+            }
+
+            return NegateIfNeeded(result);
+        }
     }
 }

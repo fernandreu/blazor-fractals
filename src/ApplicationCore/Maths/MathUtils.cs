@@ -79,6 +79,7 @@ namespace ApplicationCore.Maths
                 {
                     // Number of variable found
                     output.Add(token);
+                    continue;
                 }
 
                 switch (token)
@@ -87,14 +88,14 @@ namespace ApplicationCore.Maths
                     case "^":
                     case "(":
                         stack.Push(token);
-                        break;
+                        continue;
                     case "*":
                     case "/":
                     {
                         while (stack.Count > 0)
                         {
                             var top = stack.Peek();
-                            if (top == "^" || top == "_")
+                            if (top != "^" && top != "_")
                             {
                                 break;
                             }
@@ -103,7 +104,7 @@ namespace ApplicationCore.Maths
                         }
 
                         stack.Push(token);
-                        break;
+                        continue;
                     }
                     case "+":
                     case "-":
@@ -111,7 +112,7 @@ namespace ApplicationCore.Maths
                         while (stack.Count > 0)
                         {
                             var top = stack.Peek();
-                            if (top == "^" || top == "_" || top == "*" || top == "/")
+                            if (top != "^" && top != "_" && top != "*" && top != "/")
                             {
                                 break;
                             }
@@ -120,7 +121,7 @@ namespace ApplicationCore.Maths
                         }
 
                         stack.Push(token);
-                        break;
+                        continue;
                     }
                     case ")":
                     {
@@ -133,7 +134,7 @@ namespace ApplicationCore.Maths
 
                         if (stack.Count == 0)
                         {
-                            break;
+                            continue;
                         }
 
                         var top = stack.Peek();
@@ -143,12 +144,12 @@ namespace ApplicationCore.Maths
                             output.Add(stack.Pop());
                         }
 
-                        break;
+                        continue;
                     }
                     default:
                         // Only thing left: function token (or error)
                         stack.Push(token);
-                        break;
+                        continue;
                 }
             }
 

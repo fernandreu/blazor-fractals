@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Numerics;
 
 namespace ApplicationCore.Maths
@@ -7,6 +8,15 @@ namespace ApplicationCore.Maths
     public abstract class MathElement
     {
         public bool IsNegative { get; protected set; }
+
+        protected internal abstract Expression ToExpression(ParameterExpression parameter);
+
+        public Expression<Func<Complex, Complex>> ToExpression()
+        {
+            var parameter = Expression.Parameter(typeof(Complex), "z");
+            var body = ToExpression(parameter);
+            return Expression.Lambda<Func<Complex, Complex>>(body, parameter);
+        }
 
         private static readonly IDictionary<string, Func<Stack<MathElement>, bool>> Cache = new Dictionary<string, Func<Stack<MathElement>, bool>>
         {
@@ -73,7 +83,7 @@ namespace ApplicationCore.Maths
             };
         }
 
-        public MathElement Parse(string expression, string varName = "z")
+        public static MathElement Parse(string expression, string varName = "z")
         {
             var parts = MathUtils.ToReversePolishNotation(expression, varName);
             if (parts.Count == 0)
@@ -108,7 +118,18 @@ namespace ApplicationCore.Maths
                 stack.Push(new ConstElement(d));
             }
 
+            if (stack.Count != 1)
+            {
+                // This would mean the expression was ill-formed
+                return null;
+            }
+
             return stack.Pop();
+        }
+
+        protected Expression NegateIfNeeded(Expression result)
+        {
+            return !IsNegative ? result : Expression.Negate(result);
         }
     }
 }

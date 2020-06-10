@@ -1,4 +1,6 @@
-﻿namespace ApplicationCore.Maths
+﻿using System.Linq.Expressions;
+
+namespace ApplicationCore.Maths
 {
     public class VariableElement : MathElement
     {
@@ -8,5 +10,10 @@
         }
 
         public string Name { get; }
+
+        protected internal override Expression ToExpression(ParameterExpression parameter)
+        {
+            return NegateIfNeeded(parameter);
+        }
     }
 }

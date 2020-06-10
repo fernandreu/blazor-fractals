@@ -1,4 +1,6 @@
-﻿namespace ApplicationCore.Maths
+﻿using System.Linq.Expressions;
+
+namespace ApplicationCore.Maths
 {
     public class FractionElement : MathElement
     {
@@ -11,5 +13,11 @@
         public MathElement Numerator { get; }
 
         public MathElement Denominator { get; }
+
+        protected internal override Expression ToExpression(ParameterExpression parameter)
+        {
+            var result = Expression.Divide(Numerator.ToExpression(parameter), Denominator.ToExpression(parameter));
+            return NegateIfNeeded(result);
+        }
     }
 }

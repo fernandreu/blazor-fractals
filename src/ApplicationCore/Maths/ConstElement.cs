@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Linq.Expressions;
+using System.Numerics;
 
 namespace ApplicationCore.Maths
 {
@@ -10,5 +11,8 @@ namespace ApplicationCore.Maths
         }
 
         public Complex Value { get; }
+
+        protected internal override Expression ToExpression(ParameterExpression parameter)
+            => NegateIfNeeded(Expression.Constant(Value));
     }
 }
