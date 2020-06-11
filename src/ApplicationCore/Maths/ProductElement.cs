@@ -12,8 +12,8 @@ namespace ApplicationCore.Maths
         }
 
         public ProductElement(bool isNegative, params MathElement[] factors)
+            : base(isNegative)
         {
-            IsNegative = isNegative;
             Factors = factors.ToList();
         }
         
@@ -31,7 +31,18 @@ namespace ApplicationCore.Maths
             return NegateIfNeeded(result);
         }
 
-        public override MathElement Clone() => new ProductElement(IsNegative, Factors.Select(x => x.Clone()).ToArray());
+        public override MathElement Negated() => new ProductElement(!IsNegative, Factors.ToArray());
+        
+        public override MathElement Derive()
+        {
+            var terms = Factors.Select((factor, index) =>
+            {
+                var list = Factors.ToArray();
+                list[index] = factor.Derive();
+                return new ProductElement(IsNegative, list);
+            });
+            return new SumElement(terms.Cast<MathElement>().ToArray());
+        }
 
         public override string ToString(string variableName)
         {

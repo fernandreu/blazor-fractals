@@ -62,11 +62,28 @@ namespace CoreTests
         [TestCase("5/z")]
         [TestCase("z^(-7)")]
         [TestCase("(1-z+6z^3-6sin(z))/(5*z - log(1/z))")]
-        public void CanClone(string expression)
+        public void CanNegate(string expression)
         {
             var original = MathElement.Parse(expression);
-            var copy = original.Clone();
-            Assert.AreEqual(original.ToString(), copy.ToString());
+            
+            var copy = original.Negated();
+            Assert.AreNotSame(original, copy);
+            Assert.AreNotEqual(original.ToString(), copy.ToString());
+
+            var reverted = copy.Negated();
+            Assert.AreNotSame(original, reverted);
+            Assert.AreEqual(original.ToString(), reverted.ToString());
+        }
+
+        [TestCase("1", ExpectedResult = "0")]
+        [TestCase("z", ExpectedResult = "1")]
+        [TestCase("2z", ExpectedResult = "(0)*(z)+(2)*(1)")]
+        [TestCase("sin(z)", ExpectedResult = "(cos(z))*(1)")]
+        public string CanDerive(string expression)
+        {
+            var element = MathElement.Parse(expression);
+            var derived = element.Derive();
+            return derived.ToString();
         }
     }
 }

@@ -9,10 +9,10 @@ namespace ApplicationCore.Maths
         private static readonly MethodInfo Method = typeof(Complex).GetMethod(nameof(Complex.Pow), new[] { typeof(Complex), typeof(Complex) });
 
         public PowerElement(MathElement @base, MathElement exponent, bool isNegative = false)
+            : base(isNegative)
         {
             Base = @base;
             Exponent = exponent;
-            IsNegative = isNegative;
         }
 
         public MathElement Base { get; }
@@ -25,7 +25,25 @@ namespace ApplicationCore.Maths
             return NegateIfNeeded(result);
         }
 
-        public override MathElement Clone() => new PowerElement(Base.Clone(), Exponent.Clone(), IsNegative);
+        public override MathElement Negated() => new PowerElement(Base, Exponent, !IsNegative);
+        
+        // d/dx(u^v) = v u^(v-1) du/dx + log(u) u^v dv/dx
+        public override MathElement Derive()
+            => new SumElement(
+                new ProductElement(
+                    IsNegative,
+                    Exponent,
+                    new PowerElement(
+                        Base,
+                        new SumElement(
+                            Exponent,
+                            new ConstElement(-1))),
+                    Base.Derive()),
+                new ProductElement(
+                    IsNegative,
+                    new LogElement(Base),
+                    this,
+                    Exponent.Derive()));
 
         public override string ToString(string variableName)
         {

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Linq.Expressions;
 using System.Numerics;
 
@@ -8,9 +7,9 @@ namespace ApplicationCore.Maths
     public class ConstElement : MathElement
     {
         public ConstElement(Complex value, bool isNegative = false)
+            : base(isNegative)
         {
             Value = value;
-            IsNegative = isNegative;
         }
 
         public Complex Value { get; }
@@ -18,7 +17,9 @@ namespace ApplicationCore.Maths
         protected internal override Expression ToExpression(ParameterExpression parameter)
             => NegateIfNeeded(Expression.Constant(Value));
 
-        public override MathElement Clone() => new ConstElement(Value, IsNegative);
+        public override MathElement Negated() => new ConstElement(Value, !IsNegative);
+        
+        public override MathElement Derive() => new ConstElement(0);
 
         public override string ToString(string variableName)
         {
