@@ -5,7 +5,7 @@ namespace ApplicationCore.Maths
     public class VariableElement : MathElement
     {
         public VariableElement(bool isNegative = false)
-            : base(isNegative)
+            : base(isNegative, false)
         {
         }
 

@@ -6,10 +6,10 @@ namespace ApplicationCore.Maths
 {
     public class LogElement : MathElement
     {
-        private static readonly MethodInfo Method = typeof(Complex).GetMethod(nameof(Complex.Log));
+        private static readonly MethodInfo Method = typeof(Complex).GetMethod(nameof(Complex.Log), new[] {typeof(Complex)});
 
         public LogElement(MathElement argument, bool isNegative = false)
-            : base(isNegative)
+            : base(isNegative, argument.IsConstant)
         {
             Argument = argument;
         }
@@ -25,6 +25,9 @@ namespace ApplicationCore.Maths
         public override MathElement Negated() => new LogElement(Argument, !IsNegative);
         
         public override MathElement Derive() => new FractionElement(Argument.Derive(), Argument, IsNegative);
+
+        protected override MathElement SimplifyInternal()
+            => new LogElement(Argument.Simplify(), IsNegative);
 
         public override string ToString(string variableName)
             => $"{(IsNegative ? "-" : "")}log({Argument.ToString(variableName)})";

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Numerics;
 
 namespace ApplicationCore.Maths
 {
@@ -12,7 +13,7 @@ namespace ApplicationCore.Maths
         }
 
         public ProductElement(bool isNegative, params MathElement[] factors)
-            : base(isNegative)
+            : base(isNegative, factors.All(x => x.IsConstant))
         {
             Factors = factors.ToList();
         }
@@ -42,6 +43,63 @@ namespace ApplicationCore.Maths
                 return new ProductElement(IsNegative, list);
             });
             return new SumElement(terms.Cast<MathElement>().ToArray());
+        }
+
+        private ProductElement Combine()
+        {
+            var factors = new List<MathElement>();
+            var isNegative = IsNegative;
+            foreach (var factor in Factors)
+            {
+                if (!(factor is ProductElement product))
+                {
+                    factors.Add(factor);
+                    continue;
+                }
+
+                product = product.Combine();
+                
+                factors.AddRange(product.Factors);
+                isNegative ^= product.IsNegative;
+            }
+            
+            return new ProductElement(isNegative, factors.ToArray());
+        }
+        
+        protected override MathElement SimplifyInternal()
+        {
+            var target = Combine();
+            var factors = new List<MathElement>();
+            var constant = target.IsNegative ? -Complex.One : Complex.One;
+            foreach (var factor in target.Factors)
+            {
+                var simplified = factor.Simplify();
+                
+                if (!(simplified is ConstElement c))
+                {
+                    factors.Add(simplified);
+                    continue;
+                }
+                
+                constant *= c.IsNegative ? -c.Value : c.Value;
+            }
+
+            if (constant == Complex.Zero)
+            {
+                return new ConstElement(Complex.Zero);
+            }
+
+            if (constant != Complex.One)
+            {
+                factors.Insert(0, new ConstElement(constant));
+            }
+            
+            if (factors.Count == 1)
+            {
+                return factors[0];
+            }
+            
+            return new ProductElement(factors.ToArray());
         }
 
         public override string ToString(string variableName)

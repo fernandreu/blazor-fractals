@@ -7,7 +7,7 @@ namespace ApplicationCore.Maths
     public class ConstElement : MathElement
     {
         public ConstElement(Complex value, bool isNegative = false)
-            : base(isNegative)
+            : base(isNegative, true)
         {
             Value = value;
         }

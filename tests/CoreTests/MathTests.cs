@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using ApplicationCore.Maths;
 using NUnit.Framework;
@@ -10,20 +11,47 @@ namespace CoreTests
     {
         private static void AssertEqual(Complex expected, Complex actual, double tolerance = 1e-3)
         {
-            Assert.That(actual, Is.EqualTo(expected).Using<Complex>((a, b) => Complex.Abs(a - b) < tolerance));
+            Assert.That(
+                actual, 
+                Is.EqualTo(expected).Using<Complex>((a, b) => Complex.Abs(a - b) < tolerance));
         }
-
-        public static IEnumerable CanParseExpressionData
+        
+        private static void AssertEqual(Complex expected, Complex actual, string message, double tolerance = 1e-3)
         {
-            get
-            {
-                yield return new TestCaseData("2+z", new Complex(3, 0), new Complex(5, 0));
-                yield return new TestCaseData("2+3*z", new Complex(3, 0), new Complex(11, 0));
-                yield return new TestCaseData("sin(z)", new Complex(0.5 * Math.PI, 0), Complex.One);
-            }
+            Assert.That(
+                actual, 
+                Is.EqualTo(expected).Using<Complex>((a, b) => Complex.Abs(a - b) < tolerance),
+                message);
         }
 
-        [TestCaseSource(nameof(CanParseExpressionData))]
+        private static List<string> SampleFunctions { get; } = new List<string>
+        {
+            "5",
+            "z",
+            "i",
+            "2+i",
+            "6i",
+            "2-z",
+            "6*(-z)",
+            "sin(z)",
+            "-cos(z)",
+            "tan(z)",
+            "log(z)",
+            "5/z",
+            "z^(-7)",
+            "(1-z+6z^3-6sin(z))/(5*z - log(1/z))",
+        };
+
+        public static List<TestCaseData> SampleData { get; } = SampleFunctions.Select(x => new TestCaseData(x)).ToList();
+        
+        public static List<TestCaseData> EvaluateData { get; } = new List<TestCaseData>
+        {
+            new TestCaseData("2+z", new Complex(3, 0), new Complex(5, 0)),
+            new TestCaseData("2+3*z", new Complex(3, 0), new Complex(11, 0)),
+            new TestCaseData("sin(z)", new Complex(0.5 * Math.PI, 0), Complex.One),
+        };
+
+        [TestCaseSource(nameof(EvaluateData))]
         public void CanEvaluateExpression(string expression, Complex argument, Complex expected)
         {
             // Arrange
@@ -48,20 +76,7 @@ namespace CoreTests
             return element.ToString();
         }
 
-        [TestCase("5")]
-        [TestCase("z")]
-        [TestCase("i")]
-        [TestCase("2+i")]
-        [TestCase("6i")]
-        [TestCase("2-z")]
-        [TestCase("6*(-z)")]
-        [TestCase("sin(z)")]
-        [TestCase("-cos(z)")]
-        [TestCase("tan(z)")]
-        [TestCase("log(z)")]
-        [TestCase("5/z")]
-        [TestCase("z^(-7)")]
-        [TestCase("(1-z+6z^3-6sin(z))/(5*z - log(1/z))")]
+        [TestCaseSource(nameof(SampleData))]
         public void CanNegate(string expression)
         {
             var original = MathElement.Parse(expression);
@@ -73,6 +88,17 @@ namespace CoreTests
             var reverted = copy.Negated();
             Assert.AreNotSame(original, reverted);
             Assert.AreEqual(original.ToString(), reverted.ToString());
+        }
+
+        [TestCase("1*z*3*2", ExpectedResult = "(6)*(z)")]
+        [TestCase("5+z-7", ExpectedResult = "-2+z")]
+        [TestCase("1-2-3", ExpectedResult = "-4", Ignore = "Issues with parsing")]
+        [TestCase("(2+6-6-2)/(z^2+log(z))", ExpectedResult = "0", Ignore = "Issues with parsing")]
+        public string CanSimplify(string expression)
+        {
+            var original = MathElement.Parse(expression);
+            var actual = original.Simplify();
+            return actual.ToString();
         }
 
         [TestCase("1", ExpectedResult = "0")]

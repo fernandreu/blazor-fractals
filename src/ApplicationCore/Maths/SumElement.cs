@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Numerics;
 
 namespace ApplicationCore.Maths
 {
@@ -12,7 +13,7 @@ namespace ApplicationCore.Maths
         }
 
         public SumElement(bool isNegative, params MathElement[] terms)
-            : base(isNegative)
+            : base(isNegative, terms.All(x => x.IsConstant))
         {
             Terms = terms.ToList();
         }
@@ -35,6 +36,56 @@ namespace ApplicationCore.Maths
         
         public override MathElement Derive()
             => new SumElement(IsNegative, Terms.Select(x => x.Derive()).ToArray());
+
+        private SumElement Combine()
+        {
+            var terms = new List<MathElement>();
+            foreach (var term in Terms)
+            {
+                if (!(term is SumElement sum))
+                {
+                    terms.Add(term);
+                    continue;
+                }
+
+                sum = sum.Combine();
+                
+                terms.AddRange(sum.Terms.Select(x => IsNegative ^ sum.IsNegative ? x.Negated() : x));
+            }
+            
+            return new SumElement(terms.ToArray());
+        }
+        
+        protected override MathElement SimplifyInternal()
+        {
+            var target = Combine();
+            var terms = new List<MathElement>();
+            var constant = Complex.Zero;
+            foreach (var term in target.Terms)
+            {
+                var simplified = term.Simplify();
+                
+                if (!(simplified is ConstElement c))
+                {
+                    terms.Add(simplified);
+                    continue;
+                }
+
+                constant += c.IsNegative ? -c.Value : c.Value;
+            }
+
+            if (constant != Complex.Zero)
+            {
+                terms.Insert(0, new ConstElement(constant));
+            }
+            
+            if (terms.Count == 1)
+            {
+                return terms[0];
+            }
+            
+            return new SumElement(terms.ToArray());
+        }
 
         public override string ToString(string variableName)
         {
