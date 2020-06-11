@@ -7,11 +7,18 @@ namespace ApplicationCore.Maths
 {
     public abstract class MathElement
     {
-        public bool IsNegative { get; protected set; }
+        protected MathElement(bool isNegative)
+        {
+            IsNegative = isNegative;
+        }
+        
+        public bool IsNegative { get; }
 
         protected internal abstract Expression ToExpression(ParameterExpression parameter);
 
-        public abstract MathElement Clone();
+        public abstract MathElement Negated();
+        
+        public abstract MathElement Derive();
         
         public Expression<Func<Complex, Complex>> ToExpression()
         {
@@ -30,16 +37,8 @@ namespace ApplicationCore.Maths
             ["*"] = Process((a, b) => new ProductElement(a, b)),
             ["/"] = Process((num, den) => new FractionElement(num, den)),
             ["+"] = Process((a, b) => new SumElement(a, b)),
-            ["-"] = Process((a, b) =>
-            {
-                b.IsNegative = !b.IsNegative;
-                return new SumElement(a, b);
-            }),
-            ["_"] = Process(value =>
-            {
-                value.IsNegative = !value.IsNegative;
-                return value;
-            }),
+            ["-"] = Process((a, b) => new SumElement(a, b.Negated())),
+            ["_"] = Process(value => value.Negated()),
             ["sin"] = Process(arg => new SinElement(arg)),
             ["cos"] = Process(arg => new CosElement(arg)),
             ["tan"] = Process(arg => new TanElement(arg)),

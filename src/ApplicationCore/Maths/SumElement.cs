@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace ApplicationCore.Maths
 {
@@ -13,8 +12,8 @@ namespace ApplicationCore.Maths
         }
 
         public SumElement(bool isNegative, params MathElement[] terms)
+            : base(isNegative)
         {
-            IsNegative = isNegative;
             Terms = terms.ToList();
         }
         
@@ -32,7 +31,10 @@ namespace ApplicationCore.Maths
             return NegateIfNeeded(result);
         }
 
-        public override MathElement Clone() => new SumElement(IsNegative, Terms.Select(x => x.Clone()).ToArray());
+        public override MathElement Negated() => new SumElement(!IsNegative, Terms.ToArray());
+        
+        public override MathElement Derive()
+            => new SumElement(IsNegative, Terms.Select(x => x.Derive()).ToArray());
 
         public override string ToString(string variableName)
         {

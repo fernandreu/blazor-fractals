@@ -5,10 +5,10 @@ namespace ApplicationCore.Maths
     public class FractionElement : MathElement
     {
         public FractionElement(MathElement numerator, MathElement denominator, bool isNegative = false)
+            : base(isNegative)
         {
             Numerator = numerator;
             Denominator = denominator;
-            IsNegative = isNegative;
         }
 
         public MathElement Numerator { get; }
@@ -21,7 +21,24 @@ namespace ApplicationCore.Maths
             return NegateIfNeeded(result);
         }
 
-        public override MathElement Clone() => new FractionElement(Numerator.Clone(), Denominator.Clone(), IsNegative);
+        public override MathElement Negated() => new FractionElement(Numerator, Denominator, !IsNegative);
+        
+        // d/dx(u/v) = 1/v du/dx - u/v2 dv/dx
+        public override MathElement Derive()
+            => new SumElement(
+                new ProductElement(
+                    new FractionElement(
+                        new ConstElement(1, IsNegative), 
+                        Denominator),
+                    Numerator.Derive()),
+                new ProductElement(
+                    !IsNegative,
+                    new FractionElement(
+                        Numerator,
+                        new PowerElement(
+                            Denominator, 
+                            new ConstElement(2))),
+                    Denominator.Derive()));
 
         public override string ToString(string variableName)
         {
