@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace ApplicationCore.Maths
@@ -11,17 +12,20 @@ namespace ApplicationCore.Maths
 
         public static List<string> ToReversePolishNotation(string expression, string varName = "x")
         {
-            // Part 1: Tokenize
+            var queue = Tokenize(expression);
+            return ShuntingYardAlgorithm(queue, varName);
+        }
+
+        private static Queue<string> Tokenize(string expression)
+        {
             var queue = new Queue<string>();
 
             // Remove all whitespace characters
             expression = WhitespaceRegex.Replace(expression, "");
 
-            var output = new List<string>();
-
             if (string.IsNullOrEmpty(expression))
             {
-                return output;
+                return queue;
             }
 
             var start = 0;
@@ -70,8 +74,13 @@ namespace ApplicationCore.Maths
                 queue.Enqueue(expression.Substring(start));
             }
 
-            // Part 2: Apply the Shunting-yard algorithm
-            var stack = new Stack<string>();
+            return queue;
+        }
+        
+        private static List<string> ShuntingYardAlgorithm(Queue<string> queue, string varName = "x")
+        {
+            var output = new List<string>();
+            var stack = new Stack<Operator>();
             while (queue.Count > 0)
             {
                 var token = queue.Dequeue();
@@ -82,80 +91,56 @@ namespace ApplicationCore.Maths
                     continue;
                 }
 
-                switch (token)
+                if (!Operator.All.TryGetValue(token, out var op))
                 {
-                    case "_":
-                    case "^":
-                    case "(":
-                        stack.Push(token);
-                        continue;
-                    case "*":
-                    case "/":
-                    {
-                        while (stack.Count > 0)
-                        {
-                            var top = stack.Peek();
-                            if (top != "^" && top != "_")
-                            {
-                                break;
-                            }
-
-                            output.Add(stack.Pop());
-                        }
-
-                        stack.Push(token);
-                        continue;
-                    }
-                    case "+":
-                    case "-":
-                    {
-                        while (stack.Count > 0)
-                        {
-                            var top = stack.Peek();
-                            if (top != "^" && top != "_" && top != "*" && top != "/")
-                            {
-                                break;
-                            }
-
-                            output.Add(stack.Pop());
-                        }
-
-                        stack.Push(token);
-                        continue;
-                    }
-                    case ")":
-                    {
-                        while (stack.Count > 0 && stack.Peek() != "(")
-                        {
-                            output.Add(stack.Pop());
-                        }
-
-                        stack.Pop();
-
-                        if (stack.Count == 0)
-                        {
-                            continue;
-                        }
-
-                        var top = stack.Peek();
-                        // TODO: Review this condition, especially the top[0] part, as the index was 1 originally
-                        if (!double.TryParse(top, out _) && top != varName && top != "pi" && top != "i" && top != "e" && !(top.Length == 1 && Separators.Contains(top[0])))
-                        {
-                            output.Add(stack.Pop());
-                        }
-
-                        continue;
-                    }
-                    default:
-                        // Only thing left: function token (or error)
-                        stack.Push(token);
-                        continue;
+                    throw new InvalidOperationException($"Unrecognized token: {token}");
                 }
+
+                if (token == "(")
+                {
+                    stack.Push(op);
+                    continue;
+                }
+                
+                if (token == ")")
+                {
+                    while (stack.Count > 0 && stack.Peek().Token != "(")
+                    {
+                        output.Add(stack.Pop().Token);
+                    }
+
+                    if (stack.Count > 0 && stack.Peek().Token == "(")
+                    {
+                        stack.Pop();
+                    }
+                    
+                    continue;
+                }
+                
+                if (op.IsFunction)
+                {
+                    stack.Push(op);
+                    continue;
+                }
+                
+                // Otherwise, it is a *normal* operator
+                while (stack.Count > 0)
+                {
+                    var top = stack.Peek();
+                    if (!((top.Precedence < op.Precedence || top.Precedence == op.Precedence && op.IsLeftAssociative) && top.Token != "("))
+                    {
+                        break;
+                    }
+                        
+                    output.Add(stack.Pop().Token);
+                }
+
+                stack.Push(op);
             }
 
             while (stack.Count > 0)
             {
-                output.Add(stack.Pop());
+                output.Add(stack.Pop().Token);
             }
 
             return output;
