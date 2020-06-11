@@ -8,10 +8,11 @@ namespace ApplicationCore.Maths
     {
         private static readonly MethodInfo Method = typeof(Complex).GetMethod(nameof(Complex.Pow), new[] { typeof(Complex), typeof(Complex) });
 
-        public PowerElement(MathElement @base, MathElement exponent)
+        public PowerElement(MathElement @base, MathElement exponent, bool isNegative = false)
         {
             Base = @base;
             Exponent = exponent;
+            IsNegative = isNegative;
         }
 
         public MathElement Base { get; }
@@ -23,6 +24,8 @@ namespace ApplicationCore.Maths
             var result = Expression.Call(Method, Base.ToExpression(parameter), Exponent.ToExpression(parameter));
             return NegateIfNeeded(result);
         }
+
+        public override MathElement Clone() => new PowerElement(Base.Clone(), Exponent.Clone(), IsNegative);
 
         public override string ToString(string variableName)
         {

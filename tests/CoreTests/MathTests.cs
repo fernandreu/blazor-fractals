@@ -47,5 +47,26 @@ namespace CoreTests
             var element = MathElement.Parse(expression);
             return element.ToString();
         }
+
+        [TestCase("5")]
+        [TestCase("z")]
+        [TestCase("i")]
+        [TestCase("2+i")]
+        [TestCase("6i")]
+        [TestCase("2-z")]
+        [TestCase("6*(-z)")]
+        [TestCase("sin(z)")]
+        [TestCase("-cos(z)")]
+        [TestCase("tan(z)")]
+        [TestCase("log(z)")]
+        [TestCase("5/z")]
+        [TestCase("z^(-7)")]
+        [TestCase("(1-z+6z^3-6sin(z))/(5*z - log(1/z))")]
+        public void CanClone(string expression)
+        {
+            var original = MathElement.Parse(expression);
+            var copy = original.Clone();
+            Assert.AreEqual(original.ToString(), copy.ToString());
+        }
     }
 }

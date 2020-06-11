@@ -4,18 +4,18 @@ namespace ApplicationCore.Maths
 {
     public class VariableElement : MathElement
     {
-        public VariableElement(string name = "z")
+        public VariableElement(bool isNegative = false)
         {
-            Name = name;
+            IsNegative = isNegative;
         }
-
-        public string Name { get; }
 
         protected internal override Expression ToExpression(ParameterExpression parameter)
         {
             return NegateIfNeeded(parameter);
         }
-        
+
+        public override MathElement Clone() => new VariableElement(IsNegative);
+
         public override string ToString(string variableName)
             => $"{(IsNegative ? "-" : "")}{variableName}";
     }

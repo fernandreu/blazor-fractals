@@ -4,10 +4,11 @@ namespace ApplicationCore.Maths
 {
     public class FractionElement : MathElement
     {
-        public FractionElement(MathElement numerator, MathElement denominator)
+        public FractionElement(MathElement numerator, MathElement denominator, bool isNegative = false)
         {
             Numerator = numerator;
             Denominator = denominator;
+            IsNegative = isNegative;
         }
 
         public MathElement Numerator { get; }
@@ -19,6 +20,8 @@ namespace ApplicationCore.Maths
             var result = Expression.Divide(Numerator.ToExpression(parameter), Denominator.ToExpression(parameter));
             return NegateIfNeeded(result);
         }
+
+        public override MathElement Clone() => new FractionElement(Numerator.Clone(), Denominator.Clone(), IsNegative);
 
         public override string ToString(string variableName)
         {

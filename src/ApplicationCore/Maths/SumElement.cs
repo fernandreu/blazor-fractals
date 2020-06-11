@@ -8,10 +8,16 @@ namespace ApplicationCore.Maths
     public class SumElement : MathElement
     {
         public SumElement(params MathElement[] terms)
+            : this(false, terms)
         {
-            Terms = terms.ToList();
         }
 
+        public SumElement(bool isNegative, params MathElement[] terms)
+        {
+            IsNegative = isNegative;
+            Terms = terms.ToList();
+        }
+        
         public IReadOnlyList<MathElement> Terms { get; }
 
         protected internal override Expression ToExpression(ParameterExpression parameter)
@@ -25,6 +31,8 @@ namespace ApplicationCore.Maths
 
             return NegateIfNeeded(result);
         }
+
+        public override MathElement Clone() => new SumElement(IsNegative, Terms.Select(x => x.Clone()).ToArray());
 
         public override string ToString(string variableName)
         {
