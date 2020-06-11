@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using ApplicationCore.Exceptions;
 using ApplicationCore.Maths;
 using NUnit.Framework;
 
@@ -66,6 +67,15 @@ namespace CoreTests
             AssertEqual(expected, actual);
         }
 
+        [TestCase("abc")]
+        [TestCase("sin()")]
+        [TestCase("1+2)")]
+        [TestCase("(1+2")]
+        public void CanDetectMalformedExpressions(string expression)
+        {
+            Assert.Throws<ParseException>(() => MathElement.Parse(expression));
+        }
+        
         [TestCase("2+z", ExpectedResult = "2+z")]
         [TestCase("2+3*z", ExpectedResult = "2+(3)*(z)")]
         [TestCase("-sin(z)", ExpectedResult = "-sin(z)")]
