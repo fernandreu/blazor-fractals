@@ -19,6 +19,22 @@ namespace ApplicationCore.Maths
         public abstract MathElement Negated();
         
         public abstract MathElement Derive();
+
+        public MathElement Derive(int order)
+        {
+            if (order < 0)
+            {
+                return null;
+            }
+
+            var result = this;
+            for (var i = 0; i < order; ++i)
+            {
+                result = result.Derive();
+            }
+
+            return result;
+        }
         
         public Expression<Func<Complex, Complex>> ToExpression()
         {
