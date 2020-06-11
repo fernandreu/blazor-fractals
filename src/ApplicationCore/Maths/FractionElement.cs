@@ -1,11 +1,12 @@
 ﻿using System.Linq.Expressions;
+using System.Numerics;
 
 namespace ApplicationCore.Maths
 {
     public class FractionElement : MathElement
     {
         public FractionElement(MathElement numerator, MathElement denominator, bool isNegative = false)
-            : base(isNegative)
+            : base(isNegative, numerator.IsConstant && denominator.IsConstant)
         {
             Numerator = numerator;
             Denominator = denominator;
@@ -39,6 +40,17 @@ namespace ApplicationCore.Maths
                             Denominator, 
                             new ConstElement(2))),
                     Denominator.Derive()));
+
+        protected override MathElement SimplifyInternal()
+        {
+            var numerator = Numerator.Simplify();
+            if (numerator is ConstElement c && c.Value == Complex.Zero)
+            {
+                return new ConstElement(Complex.Zero);
+            }
+            
+            return new FractionElement(numerator, Denominator.Simplify(), IsNegative);
+        }
 
         public override string ToString(string variableName)
         {

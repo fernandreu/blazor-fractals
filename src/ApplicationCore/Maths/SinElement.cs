@@ -9,7 +9,7 @@ namespace ApplicationCore.Maths
         private static readonly MethodInfo Method = typeof(Complex).GetMethod(nameof(Complex.Sin));
 
         public SinElement(MathElement argument, bool isNegative = false)
-            : base(isNegative)
+            : base(isNegative, argument.IsConstant)
         {
             Argument = argument;
         }
@@ -26,6 +26,9 @@ namespace ApplicationCore.Maths
         
         public override MathElement Derive()
             => new ProductElement(IsNegative, new CosElement(Argument), Argument.Derive());
+
+        protected override MathElement SimplifyInternal()
+            => new SinElement(Argument.Simplify(), IsNegative);
 
         public override string ToString(string variableName)
             => $"{(IsNegative ? "-" : "")}sin({Argument.ToString(variableName)})";

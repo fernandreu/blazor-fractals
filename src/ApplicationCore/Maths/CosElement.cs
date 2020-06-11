@@ -9,7 +9,7 @@ namespace ApplicationCore.Maths
         private static readonly MethodInfo Method = typeof(Complex).GetMethod(nameof(Complex.Cos));
 
         public CosElement(MathElement argument, bool isNegative = false)
-            : base(isNegative)
+            : base(isNegative, argument.IsConstant)
         {
             Argument = argument;
         }
@@ -26,6 +26,9 @@ namespace ApplicationCore.Maths
 
         public override MathElement Derive()
             => new ProductElement(!IsNegative, new SinElement(Argument), Argument.Derive());
+
+        protected override MathElement SimplifyInternal()
+            => new CosElement(Argument.Simplify(), IsNegative);
 
         public override string ToString(string variableName)
             => $"{(IsNegative ? "-" : "")}cos({Argument.ToString(variableName)})";

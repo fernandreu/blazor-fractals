@@ -7,14 +7,25 @@ namespace ApplicationCore.Maths
 {
     public abstract class MathElement
     {
-        protected MathElement(bool isNegative)
+        protected MathElement(bool isNegative, bool isConstant)
         {
             IsNegative = isNegative;
+            IsConstant = isConstant;
         }
         
+        /// <summary>
+        /// Gets whether the entire expression has a unary minus
+        /// </summary>
         public bool IsNegative { get; }
 
+        /// <summary>
+        /// Gets whether the entire expression depends on a variable or not
+        /// </summary>
+        public bool IsConstant { get; }
+
         protected internal abstract Expression ToExpression(ParameterExpression parameter);
+
+        public Func<Complex, Complex> ToFunc() => ToExpression().Compile();
 
         public abstract MathElement Negated();
         
@@ -35,6 +46,19 @@ namespace ApplicationCore.Maths
 
             return result;
         }
+
+        public MathElement Simplify() => IsConstant ? new ConstElement(Evaluate(Complex.Zero)) : SimplifyInternal();
+
+        protected virtual MathElement SimplifyInternal() => this;
+        
+        /// <summary>
+        /// Evaluates this element at the specific point.
+        ///
+        /// Note: this can be resource-intensive. If used repeatedly, cache the function first using ToFunc().
+        /// </summary>
+        /// <param name="point">The point to evaluate the element at</param>
+        /// <returns></returns>
+        public Complex Evaluate(Complex point) => ToFunc()(point);
         
         public Expression<Func<Complex, Complex>> ToExpression()
         {

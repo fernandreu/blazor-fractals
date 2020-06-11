@@ -9,7 +9,7 @@ namespace ApplicationCore.Maths
         private static readonly MethodInfo Method = typeof(Complex).GetMethod(nameof(Complex.Tan));
 
         public TanElement(MathElement argument, bool isNegative = false)
-            : base(isNegative)
+            : base(isNegative, argument.IsConstant)
         {
             Argument = argument;
         }
@@ -29,6 +29,9 @@ namespace ApplicationCore.Maths
                 Argument.Derive(),
                 new PowerElement(new CosElement(Argument), new ConstElement(2)),
                 IsNegative);
+
+        protected override MathElement SimplifyInternal()
+            => new TanElement(Argument.Simplify(), IsNegative);
 
         public override string ToString(string variableName)
             => $"{(IsNegative ? "-" : "")}tan({Argument.ToString(variableName)})";

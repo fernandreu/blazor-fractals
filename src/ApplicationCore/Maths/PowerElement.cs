@@ -9,7 +9,7 @@ namespace ApplicationCore.Maths
         private static readonly MethodInfo Method = typeof(Complex).GetMethod(nameof(Complex.Pow), new[] { typeof(Complex), typeof(Complex) });
 
         public PowerElement(MathElement @base, MathElement exponent, bool isNegative = false)
-            : base(isNegative)
+            : base(isNegative, @base.IsConstant && exponent.IsConstant)
         {
             Base = @base;
             Exponent = exponent;
@@ -44,6 +44,9 @@ namespace ApplicationCore.Maths
                     new LogElement(Base),
                     this,
                     Exponent.Derive()));
+
+        protected override MathElement SimplifyInternal()
+            => new PowerElement(Base.Simplify(), Exponent.Simplify(), IsNegative);
 
         public override string ToString(string variableName)
         {
