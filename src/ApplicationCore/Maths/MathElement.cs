@@ -68,6 +68,21 @@ namespace ApplicationCore.Maths
             return Expression.Lambda<Func<Complex, Complex>>(body, parameter);
         }
 
+        /// <summary>
+        /// Generates a function ready to perform the Newton's method, i.e. z - m * f(z) / f'(z)
+        /// </summary>
+        /// <param name="multiplicity">The multiplicity (m)</param>
+        /// <returns>The function generated</returns>
+        public MathElement ToNewtonFunction(Complex multiplicity)
+        {
+            return new SumElement(
+                new VariableElement(),
+                new ProductElement(
+                    new ConstElement(-multiplicity),
+                    new FractionElement(this, Derive()))
+                );
+        }
+        
         public override string ToString() => ToString("z");
         
         public abstract string ToString(string variableName);
