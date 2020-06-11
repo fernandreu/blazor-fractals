@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Numerics;
+using ApplicationCore.Exceptions;
 
 namespace ApplicationCore.Maths
 {
@@ -71,7 +72,7 @@ namespace ApplicationCore.Maths
         
         public abstract string ToString(string variableName);
 
-        private static readonly IDictionary<string, Func<Stack<MathElement>, bool>> Cache = new Dictionary<string, Func<Stack<MathElement>, bool>>
+        private static readonly IDictionary<string, Action<Stack<MathElement>>> Cache = new Dictionary<string, Action<Stack<MathElement>>>
         {
             ["^"] = Process((b, e) => new PowerElement(b, e)),
             ["*"] = Process((a, b) => new ProductElement(a, b)),
@@ -88,43 +89,40 @@ namespace ApplicationCore.Maths
             ["e"] = Process(new Complex(Math.E, 0)),
         };
 
-        private static Func<Stack<MathElement>, bool> Process(Complex number)
+        private static Action<Stack<MathElement>> Process(Complex number)
         {
             return stack =>
             {
                 stack.Push(new ConstElement(number));
-                return true;
             };
         }
 
-        private static Func<Stack<MathElement>, bool> Process<T>(Func<MathElement, T> generator)
+        private static Action<Stack<MathElement>> Process<T>(Func<MathElement, T> generator)
             where T : MathElement
         {
             return stack =>
             {
                 if (stack.Count < 1)
                 {
-                    return false;
+                    throw new ParseException($"Expected 1 item in stack but found {stack.Count}");
                 }
 
                 stack.Push(generator(stack.Pop()));
-                return true;
             };
         }
 
-        private static Func<Stack<MathElement>, bool> Process<T>(Func<MathElement, MathElement, T> generator)
+        private static Action<Stack<MathElement>> Process<T>(Func<MathElement, MathElement, T> generator)
             where T : MathElement
         {
             return stack =>
             {
                 if (stack.Count < 2)
                 {
-                    return false;
+                    throw new ParseException($"Expected 2 items in stack but found {stack.Count}");
                 }
 
                 var temp = stack.Pop();
                 stack.Push(generator(stack.Pop(), temp));
-                return true;
             };
         }
 
@@ -133,7 +131,7 @@ namespace ApplicationCore.Maths
             var parts = MathUtils.ToReversePolishNotation(expression, varName);
             if (parts.Count == 0)
             {
-                return null;
+                throw new ParseException("Nothing to parse");
             }
 
             var stack = new Stack<MathElement>();
@@ -147,17 +145,13 @@ namespace ApplicationCore.Maths
 
                 if (Cache.TryGetValue(part, out var processor))
                 {
-                    if (!processor(stack))
-                    {
-                        return null;
-                    }
-
+                    processor(stack);
                     continue;
                 }
 
                 if (!double.TryParse(part, out var d))
                 {
-                    return null;
+                    throw new ParseException($"Unrecognized token: {part}");
                 }
 
                 stack.Push(new ConstElement(d));
@@ -166,7 +160,7 @@ namespace ApplicationCore.Maths
             if (stack.Count != 1)
             {
                 // This would mean the expression was ill-formed
-                return null;
+                throw new ParseException($"Expecting 1 item in stack at end of the parsing process but got {stack.Count} instead");
             }
 
             return stack.Pop();

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using ApplicationCore.Exceptions;
 
 namespace ApplicationCore.Maths
 {
@@ -25,7 +26,7 @@ namespace ApplicationCore.Maths
 
             if (string.IsNullOrEmpty(expression))
             {
-                return queue;
+                throw new ParseException("The expression cannot be empty");
             }
 
             var start = 0;
@@ -93,7 +94,7 @@ namespace ApplicationCore.Maths
 
                 if (!Operator.All.TryGetValue(token, out var op))
                 {
-                    throw new InvalidOperationException($"Unrecognized token: {token}");
+                    throw new ParseException($"Unrecognized token: {token}");
                 }
 
                 if (token == "(")
@@ -109,10 +110,12 @@ namespace ApplicationCore.Maths
                         output.Add(stack.Pop().Token);
                     }
 
-                    if (stack.Count > 0 && stack.Peek().Token == "(")
+                    if (stack.Count == 0)
                     {
-                        stack.Pop();
+                        throw new ParseException("Mismatched open / close brackets");
                     }
+
+                    stack.Pop();
                     
                     continue;
                 }
