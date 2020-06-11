@@ -11,6 +11,8 @@ namespace ApplicationCore.Maths
 
         protected internal abstract Expression ToExpression(ParameterExpression parameter);
 
+        public abstract MathElement Clone();
+        
         public Expression<Func<Complex, Complex>> ToExpression()
         {
             var parameter = Expression.Parameter(typeof(Complex), "z");
@@ -19,7 +21,7 @@ namespace ApplicationCore.Maths
         }
 
         public override string ToString() => ToString("z");
-
+        
         public abstract string ToString(string variableName);
 
         private static readonly IDictionary<string, Func<Stack<MathElement>, bool>> Cache = new Dictionary<string, Func<Stack<MathElement>, bool>>
@@ -100,7 +102,7 @@ namespace ApplicationCore.Maths
             {
                 if (part == varName)
                 {
-                    stack.Push(new VariableElement(varName));
+                    stack.Push(new VariableElement());
                     continue;
                 }
 

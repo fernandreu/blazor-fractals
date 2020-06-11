@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Numerics;
 
@@ -6,9 +7,10 @@ namespace ApplicationCore.Maths
 {
     public class ConstElement : MathElement
     {
-        public ConstElement(Complex value)
+        public ConstElement(Complex value, bool isNegative = false)
         {
             Value = value;
+            IsNegative = isNegative;
         }
 
         public Complex Value { get; }
@@ -16,20 +18,25 @@ namespace ApplicationCore.Maths
         protected internal override Expression ToExpression(ParameterExpression parameter)
             => NegateIfNeeded(Expression.Constant(Value));
 
+        public override MathElement Clone() => new ConstElement(Value, IsNegative);
+
         public override string ToString(string variableName)
         {
             var value = IsNegative ? -Value : Value;
-            if (value.Imaginary == 0)
+            var real = value.Real.ToString(CultureInfo.CurrentCulture);
+            var imag = value.Imaginary.ToString(CultureInfo.CurrentCulture);
+            
+            if (imag == "0")
             {
-                return value.Real.ToString();
+                return real;
             }
 
-            if (value.Real == 0)
+            if (real == "0")
             {
-                return $"{value.Imaginary}i";
+                return $"{imag}i";
             }
 
-            return $"{value.Real}{(value.Imaginary > 0 ? "+" : "")}{value.Imaginary}i";
+            return $"{real}{(value.Imaginary > 0 ? "+" : "")}{imag}i";
         }
     }
 }

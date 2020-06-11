@@ -7,10 +7,16 @@ namespace ApplicationCore.Maths
     public class ProductElement : MathElement
     {
         public ProductElement(params MathElement[] factors)
+            : this(false, factors)
         {
-            Factors = factors.ToList();
         }
 
+        public ProductElement(bool isNegative, params MathElement[] factors)
+        {
+            IsNegative = isNegative;
+            Factors = factors.ToList();
+        }
+        
         public IReadOnlyList<MathElement> Factors { get; }
 
         protected internal override Expression ToExpression(ParameterExpression parameter)
@@ -24,6 +30,8 @@ namespace ApplicationCore.Maths
 
             return NegateIfNeeded(result);
         }
+
+        public override MathElement Clone() => new ProductElement(IsNegative, Factors.Select(x => x.Clone()).ToArray());
 
         public override string ToString(string variableName)
         {
