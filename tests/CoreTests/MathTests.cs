@@ -92,8 +92,8 @@ namespace CoreTests
 
         [TestCase("1*z*3*2", ExpectedResult = "(6)*(z)")]
         [TestCase("5+z-7", ExpectedResult = "-2+z")]
-        [TestCase("1-2-3", ExpectedResult = "-4", Ignore = "Issues with parsing")]
-        [TestCase("(2+6-6-2)/(z^2+log(z))", ExpectedResult = "0", Ignore = "Issues with parsing")]
+        [TestCase("1-2-3", ExpectedResult = "-4")]
+        [TestCase("(2+6-6-2)/(z^2+log(z))", ExpectedResult = "0")]
         public string CanSimplify(string expression)
         {
             var original = MathElement.Parse(expression);
