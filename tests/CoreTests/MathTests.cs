@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using ApplicationCore.Exceptions;
+using ApplicationCore.Helpers;
 using ApplicationCore.Maths;
 using NUnit.Framework;
 
@@ -120,6 +121,29 @@ namespace CoreTests
             var element = MathElement.Parse(expression);
             var derived = element.Derive();
             return derived.ToString();
+        }
+
+        [TestCase("z^2-1", 1, 5, 1)]
+        [TestCase("z^2-1", 1, -5, -1)]
+        public void NewtonMethodTests(string expression, double multiplicity, double startingPoint, double expected)
+        {
+            // Only testing the real part, as it makes it simpler to pass compile-time
+            // inputs. The outcome should be the same for complex numbers, especially
+            // given that the Complex library already existed
+            
+            var element = MathElement.Parse(expression);
+            var newton = element.ToNewtonFunction(new Complex(multiplicity, 0));
+            var func = newton.ToFunc();
+
+            var options = new NewtonOptions
+            {
+                MaxIterations = 50,
+                Precision = 1e-3,
+                StartingPoint = new Complex(startingPoint, 0),
+            };
+
+            var result = MathUtils.NewtonMethod(func, options);
+            Assert.AreEqual(expected, result.Solution.Real, 1e-2);
         }
     }
 }

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text.RegularExpressions;
 using ApplicationCore.Exceptions;
+using ApplicationCore.Helpers;
 
 namespace ApplicationCore.Maths
 {
@@ -147,6 +149,47 @@ namespace ApplicationCore.Maths
             }
 
             return output;
+        }
+
+        public static NewtonResult NewtonMethod(Func<Complex, Complex> func, NewtonOptions options)
+        {
+            var result = new NewtonResult
+            {
+                Status = SolutionStatus.MaxIterationsReached,
+            };
+
+            var nan = new Complex(double.NaN, double.NaN);
+            var previousPoints = (nan, nan);
+            var newPoint = options.StartingPoint;
+            for (var iteration = 1; iteration <= options.MaxIterations; ++iteration)
+            {
+                result.Iterations = iteration;
+                previousPoints = (previousPoints.Item2, newPoint);
+                newPoint = func(newPoint);
+
+                if (double.IsNaN(newPoint.Real) || double.IsNaN(newPoint.Imaginary))
+                {
+                    result.Status = SolutionStatus.NaN;
+                    break;
+                }
+
+                // This must have higher precision to avoid false positives
+                if (iteration > 2 && Complex.Abs(previousPoints.Item1 - newPoint) < options.Precision * 1e-3)
+                {
+                    result.Status = SolutionStatus.CyclicBehavior;
+                    break;
+                }
+
+                if (Complex.Abs(previousPoints.Item2 - newPoint) < options.Precision)
+                {
+                    result.Status = SolutionStatus.Found;
+                    break;
+                }
+            }
+
+            result.Solution = newPoint;
+            result.PreviousSolution = previousPoints.Item2;
+            return result;
         }
     }
 }
