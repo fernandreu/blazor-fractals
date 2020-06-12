@@ -1,0 +1,174 @@
+﻿@using ApplicationCore.Helpers
+@using ApplicationCore.Maths
+@using ApplicationCore.Media
+@using SixLabors.ImageSharp.ColorSpaces.Conversion
+@using SixLabors.ImageSharp.PixelFormats
+@using System.Numerics
+@using ApplicationCore.Exceptions
+<div class="container">
+    <form>
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="inputExpression">Expression</label>
+                <input type="text" class="form-control" id="inputExpression" placeholder="Expression" @bind="_expression"/>
+                <small class="form-text text-muted">More complex expressions will take longer to process</small>
+            </div>
+            <div class="form-group col-md-4">
+                <label for="inputMultiplicity">Multiplicity</label>
+                <div class="input-group" id="inputMultiplicity">
+                    <input type="text" class="form-control" placeholder="Real Part" @bind="_multiplicityReal"/>
+                    <div class="input-group-prepend"><div class="input-group-text">+</div></div>
+                    <input type="text" class="form-control" placeholder="Imaginary Part" @bind="_multiplicityImaginary"/>
+                    <div class="input-group-append"><div class="input-group-text">i</div></div>
+                </div>
+                <small class="form-text text-muted">Values different from (1,0) create interesting fractal variations but can need significantly more steps to converge</small>
+            </div>
+            <div class="form-group col-md-4">
+                <label for="inputSize">Image size</label>
+                <div class="input-group" id="inputSize">
+                    <div class="input-group-prepend"><div class="input-group-text">Width</div></div>
+                    <input type="text" class="form-control" placeholder="Width" @bind="_options.PixelSize.Width"/>
+                    <div class="input-group-prepend"><div class="input-group-text">Height</div></div>
+                    <input type="text" class="form-control" placeholder="Height" @bind="_options.PixelSize.Height"/>
+                </div>
+                <small class="form-text text-muted">Processing time greatly increases with image size</small>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="inputColor">Background color</label>
+                <div class="input-group" id="inputColor" >
+                    <div class="input-group-prepend"><div class="input-group-text">@_color</div></div>
+                    <input type="color" class="form-control" placeholder="Background color" @bind="_color"/>
+                </div>
+                <small class="form-text text-muted">This gets used in non-converged areas</small>
+            </div>
+            <div class="form-group col-md-4">
+                <label for="inputRealSize">Real bounds</label>
+                <div class="input-group" id="inputRealSize">
+                    <div class="input-group-prepend"><div class="input-group-text">Min</div></div>
+                    <input type="text" class="form-control" placeholder="Min X" @bind="_options.DomainSize.MinX"/>
+                    <div class="input-group-prepend"><div class="input-group-text">Max</div></div>
+                    <input type="text" class="form-control" placeholder="Max X" @bind="_options.DomainSize.MaxX"/>
+                </div>
+                <small class="form-text text-muted">The fractal will cover this domain in the real (x) axis</small>
+            </div>
+            <div class="form-group col-md-4">
+                <label for="inputImaginarySize">Imaginary bounds</label>
+                <div class="input-group" id="inputImaginarySize">
+                    <div class="input-group-prepend"><div class="input-group-text">Min</div></div>
+                    <input type="text" class="form-control" placeholder="Min Y" @bind="_options.DomainSize.MinY"/>
+                    <div class="input-group-prepend"><div class="input-group-text">Max</div></div>
+                    <input type="text" class="form-control" placeholder="Max Y" @bind="_options.DomainSize.MaxY"/>
+                </div>
+                <small class="form-text text-muted">The fractal will cover this domain in the imaginary (y) axis</small>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-3">
+                <label for="inputIterations">Max iterations</label>
+                <input type="text" class="form-control" id="inputIterations" placeholder="Max iterations" @bind="_options.MaxIterations"/>
+                <small class="form-text text-muted">If this is exceeded, the background color will be used instead for that pixel</small>
+            </div>
+            <div class="form-group col-md-2">
+                <label for="inputPrecision">Precision</label>
+                <input type="text" class="form-control" id="inputPrecision" placeholder="Precision" @bind="_options.Precision"/>
+                <small class="form-text text-muted">Target error for converging to a solution</small>
+            </div>
+            <div class="form-group col-md-2">
+                <label for="inputDepth">Depth</label>
+                <input type="text" class="form-control" id="inputDepth" placeholder="Depth" @bind="_options.Depth"/>
+                <small class="form-text text-muted">Rate of change in brightness per iteration (can be negative)</small>
+            </div>
+            <div class="form-group col-md-3">
+                <label for="inputThreshold">Threshold</label>
+                <input type="text" class="form-control" id="inputThreshold" placeholder="Precision" @bind="_options.Threshold"/>
+                <small class="form-text text-muted">Depth will only be taken into account after this amount of iterations</small>
+            </div>
+            <div class="form-group col-md-2">
+                <label for="inputGradient">Gradient</label>
+                <input type="text" class="form-control" id="inputGradient" placeholder="Precision" @bind="_options.Gradient"/>
+                <small class="form-text text-muted">Factor to smoothen depth boundaries</small>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-text col-md-10" style="color: red; font-weight: bold;">@_errorMessage</div>
+            <button class="btn btn-primary col-md-2" type="button" @onclick="GenerateImageAsync">Generate</button>
+        </div>
+    </form>
+    
+    @if (_parsedExpression != null)
+    {
+        <div class="card" style="margin: 10px">
+            <div class="card-body">
+                <p class="card-text">
+                    <b>Parsed expression:</b> @_parsedExpression
+                </p>
+            </div>
+            @if (_imageSource != null)
+            {
+                <img class="card-img-bottom" style="max-width: 100%; height: auto" src="@_imageSource" alt="Generated fractal"/>
+            }
+        </div>
+    }
+</div>
+
+
+@code
+{
+    private FractalOptions _options = new FractalOptions
+    {
+        Depth = 15,
+        Gradient = 0.25f,
+    };
+
+    private string _expression = "z^3+1";
+
+    private double _multiplicityReal = 1;
+
+    private double _multiplicityImaginary = 0;
+    
+    private string _parsedExpression;
+    
+    private string _color = "#000000";
+
+    private string _errorMessage;
+    
+    private string _imageSource;
+
+    private async Task GenerateImageAsync()
+    {
+        _errorMessage = null;
+        
+        MathElement  element;
+        try
+        {
+            element = MathElement.Parse(_expression);
+        }
+        catch (ParseException ex)
+        {
+            _errorMessage = $"Parse error: {ex.Message}";
+            _parsedExpression = null;
+            _imageSource = null;
+            return;
+        }
+        
+        _options.MaxIterations = 50;
+        _options.Precision = 1e-5;
+
+        var converter = new ColorSpaceConverter();
+        _options.FillColor = converter.ToHsv(Rgba32.ParseHex(_color));
+
+        _parsedExpression = element.ToString();
+        
+        var func = element.ToNewtonFunction(new Complex(_multiplicityReal, _multiplicityImaginary)).ToFunc();
+        
+        var webImage = await Task.Run(() =>
+        {
+            var fractal = MathUtils.Fractal(func, _options);
+            var image = ImageUtils.GenerateImage(fractal.Contents);
+            return image.ToWebImage();
+        });
+        _imageSource = webImage.Source;
+    }
+}
