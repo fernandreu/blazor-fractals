@@ -1,0 +1,117 @@
+﻿@using ApplicationCore.Helpers
+@using ApplicationCore.Maths
+@using ApplicationCore.Media
+@using SixLabors.ImageSharp.ColorSpaces.Conversion
+@using SixLabors.ImageSharp.PixelFormats
+@using System.Numerics
+@using ApplicationCore.Exceptions
+<div class="container">
+    <form>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="inputExpression">Expression</label>
+                <input type="text" class="form-control" id="inputExpression" placeholder="Expression" @bind="_expression"/>
+                <small id="expressionHelp" class="form-text text-muted">More complex expressions will take longer to process</small>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="inputSize">Image size</label>
+                <div class="form-inline" id="inputSize">
+                    <input type="text" class="form-control" placeholder="Width" @bind="_widthString"/>
+                    <input type="text" class="form-control" placeholder="Height" @bind="_heightString"/>
+                </div>
+                <small id="sizeHelp" class="form-text text-muted">Processing time greatly increases with image size</small>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group col-md-2">
+                <label for="inputColor">Background color</label>
+                <input type="color" class="form-control" id="inputColor" placeholder="Background color" @bind="_color"/>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-text col-md-10" style="color: darkred; font-weight: bold;">@_errorMessage</div>
+            <button class="btn btn-primary col-md-2" type="button" @onclick="GenerateImageAsync">Generate</button>
+        </div>
+    </form>
+    
+    @if (_parsedExpression != null)
+    {
+        <div class="row">
+            Parsed expression: @_parsedExpression
+        </div>
+    }
+
+    @if (_imageSource != null)
+    {
+        <div class="row">
+            <img src="@(_imageSource)"/>
+        </div>
+    }
+</div>
+
+
+@code
+{
+    private FractalOptions _options = new FractalOptions();
+
+    private string _expression = "z^3+1";
+
+    private string _parsedExpression;
+    
+    private string _widthString = "200";
+
+    private string _heightString = "200";
+
+    private string _color = "#123456";
+
+    private string _errorMessage;
+    
+    private string _imageSource;
+
+    private async Task GenerateImageAsync()
+    {
+        _errorMessage = null;
+        
+        MathElement  element;
+        try
+        {
+            element = MathElement.Parse(_expression);
+        }
+        catch (ParseException ex)
+        {
+            _errorMessage = $"Parse error: {ex.Message}";
+            _parsedExpression = null;
+            _imageSource = null;
+            return;
+        }
+        
+        if (!int.TryParse(_widthString, out var width))
+        {
+            width = 500;
+        }
+
+        if (!int.TryParse(_heightString, out var height))
+        {
+            height = 500;
+        }
+
+        _options.PixelSize = new PixelSize(width, height);
+        _options.DomainSize = new DomainSize(-10, 10, -10, 10);
+        _options.MaxIterations = 50;
+        _options.Precision = 1e-5;
+
+        var converter = new ColorSpaceConverter();
+        _options.FillColor = converter.ToHsv(Rgba32.ParseHex(_color));
+
+        _parsedExpression = element.ToString();
+        
+        var webImage = await Task.Run(() =>
+        {
+            var func = element.ToNewtonFunction(Complex.One).ToFunc();
+            var fractal = MathUtils.Fractal(func, _options);
+            var image = ImageUtils.GenerateImage(fractal.Contents);
+            return image.ToWebImage();
+        });
+        _imageSource = webImage.Source;
+    }
+}

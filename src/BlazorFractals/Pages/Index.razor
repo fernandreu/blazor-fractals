@@ -1,10 +1,4 @@
 ﻿@page "/"
-@using ApplicationCore.Helpers
-@using ApplicationCore.Maths
-@using ApplicationCore.Media
-@using SixLabors.ImageSharp.ColorSpaces.Conversion
-@using SixLabors.ImageSharp.PixelFormats
-@using System.Numerics
 
 <h1>Hello, world!</h1>
 
@@ -12,76 +6,4 @@ Welcome to your new app.
 
 <SurveyPrompt Title="How is Blazor working for you?" />
 
-<div class="container">
-    <div class="row">
-        <input class="form-control col-2" @bind="_expression"/>
-        <input class="form-control col-2" @bind="_widthString"/>
-        <input class="form-control col-2" @bind="_heightString"/>
-        <input class="form-control col-2" @bind="_color"/>
-        <button class="btn btn-primary col-2" @onclick="GenerateImageAsync">Generate Image</button>
-    </div>
-</div>
-
-@if (_parsedExpression != null)
-{
-    <div class="row">
-        Parsed expression: @_parsedExpression
-    </div>
-}
-
-@if (_imageSource != null)
-{
-    <div class="row">
-        <img src="@(_imageSource)"/>
-    </div>
-}
-
-@code
-{
-    private FractalOptions _options = new FractalOptions();
-
-    private string _expression = "z^3+1";
-
-    private string _parsedExpression;
-    
-    private string _widthString = "200";
-
-    private string _heightString = "200";
-
-    private string _color = "#123456";
-
-    private string _imageSource;
-
-    private async Task GenerateImageAsync()
-    {
-        if (!int.TryParse(_widthString, out var width))
-        {
-            width = 500;
-        }
-
-        if (!int.TryParse(_heightString, out var height))
-        {
-            height = 500;
-        }
-
-        _options.PixelSize = new PixelSize(width, height);
-        _options.DomainSize = new DomainSize(-10, 10, -10, 10);
-        _options.MaxIterations = 50;
-        _options.Precision = 1e-5;
-
-        var converter = new ColorSpaceConverter();
-        _options.FillColor = converter.ToHsv(Rgba32.ParseHex(_color));
-
-        var element = MathElement.Parse(_expression);
-        _parsedExpression = element.ToString();
-        
-        var webImage = await Task.Run(() =>
-        {
-            var func = element.ToNewtonFunction(Complex.One).ToFunc();
-            var fractal = MathUtils.Fractal(func, _options);
-            var image = ImageUtils.GenerateImage(fractal.Contents);
-            return image.ToWebImage();
-        });
-        _imageSource = webImage.Source;
-    }
-}
+<FractalPanel/>
