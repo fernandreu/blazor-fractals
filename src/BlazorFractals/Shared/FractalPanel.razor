@@ -99,15 +99,16 @@
     
     @if (_parsedExpression != null)
     {
-        <div class="row">
-            Parsed expression: @_parsedExpression
-        </div>
-    }
-
-    @if (_imageSource != null)
-    {
-        <div class="row">
-            <img src="@(_imageSource)"/>
+        <div class="card" style="margin: 10px">
+            <div class="card-body">
+                <p class="card-text">
+                    <b>Parsed expression:</b> @_parsedExpression
+                </p>
+            </div>
+            @if (_imageSource != null)
+            {
+                <img class="card-img-bottom" style="max-width: 100%; height: auto" src="@_imageSource" alt="Generated fractal"/>
+            }
         </div>
     }
 </div>
