@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
 using ApplicationCore.Exceptions;
+using ApplicationCore.Extensions;
 using ApplicationCore.Helpers;
+using SixLabors.ImageSharp.ColorSpaces;
+using SixLabors.ImageSharp.ColorSpaces.Conversion;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace ApplicationCore.Maths
 {
@@ -190,6 +195,136 @@ namespace ApplicationCore.Maths
             result.Solution = newPoint;
             result.PreviousSolution = previousPoints.Item2;
             return result;
+        }
+    
+        public static FractalResult Fractal(Func<Complex, Complex> func, FractalOptions options)
+        {
+            var result = new FractalResult
+            {
+                Contents = new Hsv[options.PixelSize.Width, options.PixelSize.Height],
+            };
+            
+            var rnd = new Random();
+            
+            // Stored as a double to avoid castings later
+            double totalPoints = options.PixelSize.Width * options.PixelSize.Height;
+
+            var colors = new List<Hsv>();
+            var roots = new List<Complex>();
+
+            var logT = MathF.Log((float) options.Precision);
+            
+            for (var px = 0; px < options.PixelSize.Width; ++px)
+            {
+                var x = options.DomainSize.MinX + (options.DomainSize.MaxX - options.DomainSize.MinX) * px / (options.PixelSize.Width - 1);
+                for (var py = 0; py < options.PixelSize.Height; ++py)
+                {
+                    var y = options.DomainSize.MinY + (options.DomainSize.MaxY - options.DomainSize.MinY) * py / (options.PixelSize.Height - 1);
+                    var newtonOptions = new NewtonOptions
+                    {
+                        Precision = options.Precision,
+                        StartingPoint = new Complex(x, y),
+                        MaxIterations = options.MaxIterations,
+                    };
+                    var solution = NewtonMethod(func, newtonOptions);
+                    result.MeanIterations += solution.Iterations / totalPoints;
+                    result.StDevIterations += solution.Iterations * solution.Iterations / totalPoints;
+
+                    if (solution.Status != SolutionStatus.Found)
+                    {
+                        result.Contents[px, py] = options.FillColor;
+                        continue;
+                    }
+
+                    var found = FindRoot(roots, solution.Solution, options.Precision * 10);
+                    Complex foundRoot;
+                    Hsv color;
+                    if (found == null)
+                    {
+                        foundRoot = solution.Solution;
+                        roots.Add(solution.Solution);
+                        color = new Hsv(rnd.NextFloat() * 360F, 1F, 1F);
+                        colors.Add(color);
+                    }
+                    else
+                    {
+                        foundRoot = found.Value.root;
+                        color = colors[found.Value.index];
+                    }
+
+                    if (options.Depth == 0)
+                    {
+                        result.Contents[px, py] = color;
+                        continue;
+                    }
+
+                    var logD0 = MathF.Log((float) Complex.Abs(solution.PreviousSolution - foundRoot));
+                    var logD1 = MathF.Log((float) Complex.Abs(solution.Solution - foundRoot));
+                    var value = color.V;
+                    
+                    if (solution.Iterations > options.Threshold)
+                    {
+                        if (options.Gradient == 0)
+                        {
+                            var factor = (solution.Iterations - 1 - options.Threshold) * options.Depth * 0.01F;
+                            if (options.Depth > 0)
+                            {
+                                value /= 1 + factor;
+                            }
+                            else
+                            {
+                                value += (1 - value) * (1 - 1 / (1 - factor));
+                            }
+                        }
+                        else
+                        {
+                            var factor = (solution.Iterations - 1 - options.Threshold) * options.Depth * 0.01F;
+                            var factorPlus = (solution.Iterations - options.Threshold) * options.Depth * 0.01F;
+                            float lowValue;
+                            float highValue;
+                            if (options.Depth > 0)
+                            {
+                                lowValue = value / (1 + factor);
+                                highValue = value / (1 + factorPlus);
+                            }
+                            else
+                            {
+                                lowValue = value + (1 - value) * (1 - 1 / (1 - factor));
+                                highValue = value + (1 - value) * (1 - 1 / (1 - factorPlus));
+                            }
+
+                            if (Math.Abs(logD1 - logD0) < 0.001)
+                            {
+                                value = highValue;
+                            }
+                            else
+                            {
+                                value = highValue + options.Gradient * (highValue - lowValue) * (logT - logD0) / (logD1 - logD0);
+                            }
+                        }
+                    }
+
+                    value = MathF.Max(0.025F, MathF.Min(0.975F, value));
+                    result.Contents[px, py] = new Hsv(color.H, color.S, value);
+                }
+            }
+
+            result.StDevIterations = Math.Sqrt(result.StDevIterations - result.MeanIterations * result.MeanIterations);
+            
+            return result;
+        }
+
+        private static (Complex root, int index)? FindRoot(IEnumerable<Complex> list, Complex root, double precision)
+        {
+            foreach (var (item, index) in list.Enumerated())
+            {
+                if (Complex.Abs(item - root) < precision)
+                {
+                    return (item, index);
+                }
+            }
+
+            return null;
         }
     }
 }
