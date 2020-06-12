@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using ApplicationCore.Extensions;
 
 namespace ApplicationCore.Maths
 {
@@ -59,7 +60,7 @@ namespace ApplicationCore.Maths
         private static IReadOnlyDictionary<string, Operator> ProcessList()
         {
             var result = new Dictionary<string, Operator>();
-            foreach (var (list, index) in FullList.Select((x, i) => (x, i)))
+            foreach (var (list, index) in FullList.Enumerated())
             {
                 foreach (var op in list)
                 {
