@@ -7,7 +7,7 @@ A generator of fractal images based on complex functions and Newton's root-findi
 The entire app runs on Blazor WebAssembly and is hosted on GitHub pages: https://fernando.andreu.info/blazor-fractals
 
 The image generation algorithm can run directly on the browser as well. However, due to some technical
-limitations in WebAssembly, this can be significantly slow than if run under a local machine. As a workaround,
+limitations in WebAssembly, this can be significantly slower than if run under a local machine. As a workaround,
 this algorithm can also be triggered from an Azure Function.
 
 
@@ -46,6 +46,13 @@ A string representing the function whose roots will be found. The following toke
 The `m` factor in the Newton's method above. A value of `1` is usually the default. Different values might make the
 convergence impossible / very slow, but might also create interesting variations of the resulting image. For example,
 values with an imaginary side, such as `1+0.8i`, will make the fractal appear like rotating respect to the origin.
+
+#### Image size
+
+The size of the resulting image, in pixels. Computation times are directly proportional to this (e.g. an image twice 
+as wide / tall will take 4x to process). **Sizes greater than `500x500` are not recommended when running the 
+algorithm on the browser**, as this can already take a signifcant amount of time and the entire UI will stop responding in the meantime (this is an unavoidable limitation of
+WebAssembly for now).
 
 #### Background color
 
