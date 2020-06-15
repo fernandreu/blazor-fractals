@@ -88,10 +88,11 @@ visible).
 
 ## Screenshots
 
-#### z^3+1
-
+z^3+1:
 ![z^3+1](docs/Screen1.png)
 
-#### (z^3+z+1)/(z^2+1)
-
+(z^3+z+1)/(z^2+1):
 ![(z^3+z+1)/(z^2+1)](docs/Screen2.png)
+
+z^3+z^2+1:
+![z^3+z^2+1](docs/Screen3.png)
