@@ -10,7 +10,7 @@
         <div class="form-row">
             <div class="form-group col-md-4">
                 <label for="inputExpression">Expression</label>
-                <input type="text" class="form-control" id="inputExpression" placeholder="Expression" @bind="_expression"/>
+                <input type="text" class="form-control" id="inputExpression" placeholder="Expression" @bind="_options.Expression"/>
                 <small class="form-text text-muted">More complex expressions will take longer to process</small>
             </div>
             <div class="form-group col-md-4">
@@ -116,14 +116,14 @@
 
 @code
 {
-    private FractalOptions _options = new FractalOptions
+    private ExtendedFractalOptions _options = new ExtendedFractalOptions
     {
         Depth = 15,
         Gradient = 0.25f,
     };
 
-    private string _expression = "z^3+1";
-
+    private bool _executeLocally = true;
+    
     private double _multiplicityReal = 1;
 
     private double _multiplicityImaginary = 0;
@@ -140,10 +140,12 @@
     {
         _errorMessage = null;
         
-        MathElement  element;
+        // Preliminary check to better capture parse errors. This means the parsing takes place
+        // twice, but it is not the most time-consuming operation by far
         try
         {
-            element = MathElement.Parse(_expression);
+            var element = MathElement.Parse(_options.Expression);
+            _parsedExpression = element.ToString();
         }
         catch (ParseException ex)
         {
@@ -153,22 +155,33 @@
             return;
         }
         
-        _options.MaxIterations = 50;
-        _options.Precision = 1e-5;
+        _options.Multiplicity = new Complex(_multiplicityReal, _multiplicityImaginary);
 
         var converter = new ColorSpaceConverter();
         _options.FillColor = converter.ToHsv(Rgba32.ParseHex(_color));
 
-        _parsedExpression = element.ToString();
-        
-        var func = element.ToNewtonFunction(new Complex(_multiplicityReal, _multiplicityImaginary)).ToFunc();
-        
-        var webImage = await Task.Run(() =>
+        if (_executeLocally)
         {
-            var fractal = MathUtils.Fractal(func, _options);
-            var image = ImageUtils.GenerateImage(fractal.Contents);
-            return image.ToWebImage();
-        });
+            await GenerateLocally();
+        }
+        else
+        {
+            await GenerateInFunction();
+        }
+    }
+
+    private async Task GenerateLocally()
+    {
+        var fractal = MathUtils.Fractal(_options);
+        await Task.Yield();
+        var image = ImageUtils.GenerateImage(fractal.Contents);
+        await Task.Yield();
+        var webImage = image.ToWebImage();
         _imageSource = webImage.Source;
+    }
+
+    private async Task GenerateInFunction()
+    {
+        
     }
 }

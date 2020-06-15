@@ -196,8 +196,15 @@ namespace ApplicationCore.Maths
             result.PreviousSolution = previousPoints.Item2;
             return result;
         }
-    
-        public static FractalResult Fractal(Func<Complex, Complex> func, FractalOptions options)
+
+        public static FractalResult Fractal(ExtendedFractalOptions options)
+        {
+            var element = MathElement.Parse(options.Expression, options.VariableName);
+            var func = element.ToNewtonFunction(options.Multiplicity).ToFunc();
+            return Fractal(func, options);
+        }
+        
+        public static FractalResult Fractal(Func<Complex, Complex> func, BasicFractalOptions options)
         {
             var result = new FractalResult
             {

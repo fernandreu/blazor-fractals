@@ -1,6 +1,8 @@
-using System;
 using System.IO;
 using System.Threading.Tasks;
+using ApplicationCore.Helpers;
+using ApplicationCore.Maths;
+using ApplicationCore.Media;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
@@ -19,17 +21,15 @@ namespace Function
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
 
-            string name = req.Query["name"];
+            var content = await new StreamReader(req.Body).ReadToEndAsync();
+            var options = JsonConvert.DeserializeObject<ExtendedFractalOptions>(content);
 
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name ??= data?.name;
-
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
-
-            return new OkObjectResult(responseMessage);
+            var fractal = MathUtils.Fractal(options);
+            var image = ImageUtils.GenerateImage(fractal.Contents);
+            var webImage = image.ToWebImage();
+            var response = webImage.Source;
+            
+            return new OkObjectResult(response);
         }
     }
 }
