@@ -5,6 +5,8 @@
 @using SixLabors.ImageSharp.PixelFormats
 @using System.Numerics
 @using ApplicationCore.Exceptions
+@inject HttpClient Http
+
 <div class="container">
     <form>
         <div class="form-row">
@@ -92,7 +94,11 @@
             </div>
         </div>
         <div class="form-row">
-            <div class="form-text col-md-10" style="color: red; font-weight: bold;">@_errorMessage</div>
+            <div class="form-text col-md-8" style="color: red; font-weight: bold;">@_errorMessage</div>
+            <div class="form-check col-md-2">
+                <input class="form-check-input" type="checkbox" id="inputLocally" @bind="_executeLocally">
+                <label class="form-check-label" for="inputLocally">Run on browser</label>
+            </div>
             <button class="btn btn-primary col-md-2" type="button" @onclick="GenerateImageAsync">Generate</button>
         </div>
     </form>
@@ -116,8 +122,11 @@
 
 @code
 {
+    private const string FunctionUrl = @"https://fractalgenerator.azurewebsites.net/api/FractalGenerator";
+    
     private ExtendedFractalOptions _options = new ExtendedFractalOptions
     {
+        Expression = "z^3+1",
         Depth = 15,
         Gradient = 0.25f,
     };
@@ -182,6 +191,8 @@
 
     private async Task GenerateInFunction()
     {
-        
+        var response = await Http.PostAsJsonAsync(FunctionUrl, _options);
+        var content = await response.Content.ReadAsStringAsync();
+        _imageSource = content;
     }
 }
