@@ -122,7 +122,13 @@
 
 @code
 {
-    private const string FunctionUrl = @"https://fractalgenerator.azurewebsites.net/api/FractalGenerator";
+    
+    private const string FunctionUrl = 
+#if DEBUG
+        @"http://localhost:7071/api/FractalGenerator";
+#else
+        @"https://fractalgenerator.azurewebsites.net/api/FractalGenerator";
+#endif
     
     private ExtendedFractalOptions _options = new ExtendedFractalOptions
     {
