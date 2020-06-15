@@ -16,7 +16,7 @@ this algorithm can also be triggered from an Azure Function.
 The Newton's method is used to find the roots of a single-variable function `f(z)` such as:
 
 <pre>
-z<sub>i+1</sub> = z<sub>i</sub> - m * f(z) / f'(z)
+z<sub>i+1</sub> = z<sub>i</sub> - m * f(z<sub>i</sub>) / f'(z<sub>i</sub>)
 </pre>
 
 If the error between the previous and current `z` value is sufficiently small, the solution has converged.
