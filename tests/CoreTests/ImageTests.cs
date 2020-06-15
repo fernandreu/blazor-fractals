@@ -26,11 +26,9 @@ namespace CoreTests
         [Test]
         public void CanCreateFullFractal()
         {
-            var element = MathElement.Parse("z^3+1");
-            var func = element.ToNewtonFunction(Complex.One).ToFunc();
-
-            var options = new FractalOptions
+            var options = new ExtendedFractalOptions
             {
+                Expression = "z^3+1",
                 PixelSize = new PixelSize(400, 400),
                 DomainSize = new DomainSize(-5, 5, -5, 5),
                 MaxIterations = 50,
@@ -40,7 +38,7 @@ namespace CoreTests
                 Gradient = 0,
             };
 
-            var result = MathUtils.Fractal(func, options);
+            var result = MathUtils.Fractal(options);
 
             var image = ImageUtils.GenerateImage(result.Contents);
             var path = Path.Combine(Directory.GetCurrentDirectory(), "Fractal.png");
