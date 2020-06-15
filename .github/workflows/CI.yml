@@ -30,13 +30,24 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.301
-    - name: Publish with dotnet
-      run: dotnet publish --configuration Release --output build
+    - name: Publish client
+      run: dotnet publish --configuration Release --project src/BlazorFractals/BlazorFractals.csproj --output build-client
     - name: Deploy to Github Pages
       uses: JamesIves/github-pages-deploy-action@releases/v3
       with:
         ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         BASE_BRANCH: master # The branch the action should deploy from.
         BRANCH: gh-pages # The branch the action should deploy to.
-        FOLDER: build/wwwroot # The folder the action should deploy.
+        FOLDER: build-client/wwwroot # The folder the action should deploy.
         SINGLE_COMMIT: true
+    - name: Publish Function
+      run: dotnet publish --configuration Release --project src/Function/Function.csproj --output build-function
+    - name: Deploy to Azure Functions
+      uses: Azure/functions-action@v1.1.4
+      with:
+        # Name of the Azure Function App
+        app-name: FractalGenerator
+        # Path to package or folder. *.zip or a folder to deploy
+        package: build-function
+        # Publish profile (*.publishsettings) file contents with web deploy secrets
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
