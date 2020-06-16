@@ -42,6 +42,14 @@ namespace ApplicationCore.Maths
                 new Operator("COS", Process(arg => new CosElement(arg)), isFunction: true), 
                 new Operator("TAN", Process(arg => new TanElement(arg)), isFunction: true), 
                 new Operator("LOG", Process(arg => new LogElement(arg)), isFunction: true), 
+                new Operator("SQRT", Process(arg => new SqrtElement(arg)), isFunction: true), 
+                new Operator("EXP", Process(arg => new ExpElement(arg)), isFunction: true), 
+                new Operator("ASIN", Process(arg => new AsinElement(arg)), isFunction: true), 
+                new Operator("ACOS", Process(arg => new AcosElement(arg)), isFunction: true), 
+                new Operator("ATAN", Process(arg => new AtanElement(arg)), isFunction: true), 
+                new Operator("SINH", Process(arg => new SinhElement(arg)), isFunction: true), 
+                new Operator("COSH", Process(arg => new CoshElement(arg)), isFunction: true), 
+                new Operator("TANH", Process(arg => new TanhElement(arg)), isFunction: true), 
             },
         };
 
