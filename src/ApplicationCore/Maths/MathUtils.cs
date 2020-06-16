@@ -226,7 +226,7 @@ namespace ApplicationCore.Maths
                 var x = options.DomainSize.MinX + (options.DomainSize.MaxX - options.DomainSize.MinX) * px / (options.PixelSize.Width - 1);
                 for (var py = 0; py < options.PixelSize.Height; ++py)
                 {
-                    var y = options.DomainSize.MinY + (options.DomainSize.MaxY - options.DomainSize.MinY) * py / (options.PixelSize.Height - 1);
+                    var y = options.DomainSize.MaxY - (options.DomainSize.MaxY - options.DomainSize.MinY) * py / (options.PixelSize.Height - 1);
                     var newtonOptions = new NewtonOptions
                     {
                         Precision = options.Precision,
