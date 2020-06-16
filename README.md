@@ -103,3 +103,6 @@ z^3+1:
 
 z^3+z^2+1:
 ![z^3+z^2+1](docs/Screen3.png)
+
+1+sinh(z^2):
+![1+sinh(z^2)](docs/Screen4.png)
