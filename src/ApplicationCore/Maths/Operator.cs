@@ -38,6 +38,9 @@ namespace ApplicationCore.Maths
             {
                 new Operator("(", null, isLeftBracket: true), 
                 new Operator(")", null, isRightBracket: true), 
+            },
+            new[]
+            {
                 new Operator("SIN", Process(arg => new SinElement(arg)), isFunction: true), 
                 new Operator("COS", Process(arg => new CosElement(arg)), isFunction: true), 
                 new Operator("TAN", Process(arg => new TanElement(arg)), isFunction: true), 
@@ -140,5 +143,7 @@ namespace ApplicationCore.Maths
                 stack.Push(generator(stack.Pop(), temp));
             };
         }
+
+        public override string ToString() => Token;
     }
 }
