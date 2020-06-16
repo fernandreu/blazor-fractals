@@ -87,62 +87,10 @@ namespace ApplicationCore.Maths
         
         public abstract string ToString(string variableName);
 
-        private static readonly IDictionary<string, Action<Stack<MathElement>>> Cache = new Dictionary<string, Action<Stack<MathElement>>>
-        {
-            ["^"] = Process((b, e) => new PowerElement(b, e)),
-            ["*"] = Process((a, b) => new ProductElement(a, b)),
-            ["/"] = Process((num, den) => new FractionElement(num, den)),
-            ["+"] = Process((a, b) => new SumElement(a, b)),
-            ["-"] = Process((a, b) => new SumElement(a, b.Negated())),
-            ["_"] = Process(value => value.Negated()),
-            ["sin"] = Process(arg => new SinElement(arg)),
-            ["cos"] = Process(arg => new CosElement(arg)),
-            ["tan"] = Process(arg => new TanElement(arg)),
-            ["log"] = Process(arg => new LogElement(arg)),
-            ["pi"] = Process(new Complex(Math.PI, 0)),
-            ["i"] = Process(Complex.ImaginaryOne),
-            ["e"] = Process(new Complex(Math.E, 0)),
-        };
-
-        private static Action<Stack<MathElement>> Process(Complex number)
-        {
-            return stack =>
-            {
-                stack.Push(new ConstElement(number));
-            };
-        }
-
-        private static Action<Stack<MathElement>> Process<T>(Func<MathElement, T> generator)
-            where T : MathElement
-        {
-            return stack =>
-            {
-                if (stack.Count < 1)
-                {
-                    throw new ParseException($"Expected 1 item in stack but found {stack.Count}");
-                }
-
-                stack.Push(generator(stack.Pop()));
-            };
-        }
-
-        private static Action<Stack<MathElement>> Process<T>(Func<MathElement, MathElement, T> generator)
-            where T : MathElement
-        {
-            return stack =>
-            {
-                if (stack.Count < 2)
-                {
-                    throw new ParseException($"Expected 2 items in stack but found {stack.Count}");
-                }
-
-                var temp = stack.Pop();
-                stack.Push(generator(stack.Pop(), temp));
-            };
-        }
-
         public static MathElement Parse(string expression, string varName = "z")
         {
+            expression = expression.ToUpperInvariant();
+            varName = varName.ToUpperInvariant();
             var parts = MathUtils.ToReversePolishNotation(expression, varName);
             if (parts.Count == 0)
             {
@@ -158,9 +106,15 @@ namespace ApplicationCore.Maths
                     continue;
                 }
 
-                if (Cache.TryGetValue(part, out var processor))
+                if (Operator.All.TryGetValue(part, out var op))
                 {
-                    processor(stack);
+                    if (op.IsLeftBracket || op.IsRightBracket)
+                    {
+                        // This should not be here. If it is, it must be an incorrect expression
+                        throw new ParseException("Mismatched open / close brackets");
+                    }
+                    
+                    op.Processor(stack);
                     continue;
                 }
 

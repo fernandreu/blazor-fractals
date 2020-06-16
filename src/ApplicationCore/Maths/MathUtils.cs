@@ -18,7 +18,7 @@ namespace ApplicationCore.Maths
 
         private static readonly HashSet<char> Separators = new HashSet<char> { '+', '-', '*', '/', '^', '(', ')', '_' };
 
-        public static List<string> ToReversePolishNotation(string expression, string varName = "x")
+        public static List<string> ToReversePolishNotation(string expression, string varName = "Z")
         {
             var queue = Tokenize(expression);
             return ShuntingYardAlgorithm(queue, varName);
@@ -85,14 +85,14 @@ namespace ApplicationCore.Maths
             return queue;
         }
         
-        private static List<string> ShuntingYardAlgorithm(Queue<string> queue, string varName = "x")
+        private static List<string> ShuntingYardAlgorithm(Queue<string> queue, string varName = "Z")
         {
             var output = new List<string>();
             var stack = new Stack<Operator>();
             while (queue.Count > 0)
             {
                 var token = queue.Dequeue();
-                if (double.TryParse(token, out _) || token == varName || token == "pi" || token == "i" || token == "e")
+                if (double.TryParse(token, out _) || token == varName)
                 {
                     // Number of variable found
                     output.Add(token);
@@ -104,15 +104,21 @@ namespace ApplicationCore.Maths
                     throw new ParseException($"Unrecognized token: {token}");
                 }
 
-                if (token == "(")
+                if (op.IsConstant)
+                {
+                    output.Add(token);
+                    continue;
+                }
+                
+                if (op.IsLeftBracket)
                 {
                     stack.Push(op);
                     continue;
                 }
                 
-                if (token == ")")
+                if (op.IsRightBracket)
                 {
-                    while (stack.Count > 0 && stack.Peek().Token != "(")
+                    while (stack.Count > 0 && !stack.Peek().IsLeftBracket)
                     {
                         output.Add(stack.Pop().Token);
                     }
@@ -137,7 +143,7 @@ namespace ApplicationCore.Maths
                 while (stack.Count > 0)
                 {
                     var top = stack.Peek();
-                    if (!((top.Precedence < op.Precedence || top.Precedence == op.Precedence && op.IsLeftAssociative) && top.Token != "("))
+                    if (!((top.Precedence < op.Precedence || top.Precedence == op.Precedence && op.IsLeftAssociative) && !top.IsLeftBracket))
                     {
                         break;
                     }
