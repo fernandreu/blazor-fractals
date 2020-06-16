@@ -129,6 +129,12 @@ namespace ApplicationCore.Maths
                     }
 
                     stack.Pop();
+
+                    if (stack.Count > 0 && stack.Peek().IsFunction)
+                    {
+                        // Functions should be followed by brackets
+                        output.Add(stack.Pop().Token);
+                    }
                     
                     continue;
                 }

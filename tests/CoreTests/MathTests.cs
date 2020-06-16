@@ -89,6 +89,7 @@ namespace CoreTests
         [TestCase("2+3*z", ExpectedResult = "2+(3)*(z)")]
         [TestCase("-sin(z)", ExpectedResult = "-sin(z)")]
         [TestCase("2-z", ExpectedResult = "2-z")]
+        [TestCase("sin(z)^2", ExpectedResult = "(sin(z))^(2)")]
         public string CanFormatExpression(string expression)
         {
             var element = MathElement.Parse(expression);
