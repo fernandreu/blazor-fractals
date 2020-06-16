@@ -37,9 +37,9 @@ A string representing the function whose roots will be found. The following toke
 
 - Operators: `*`, `/`, `+`, `-`, `^`
 - Brackets: `(`, `)`
-- The complex variable `z`
+- The complex variable: `z`
 - Constants: `pi`, `E`, `i`
-- Functions: `sin`, `cos`, `tan`, `log`
+- Functions: `log`, `sqrt`, `exp`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `tanh`
 
 #### Multiplicity
 

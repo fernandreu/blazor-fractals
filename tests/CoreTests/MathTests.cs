@@ -39,6 +39,14 @@ namespace CoreTests
             "-cos(z)",
             "tan(z)",
             "log(z)",
+            "exp(z)",
+            "sqrt(z)",
+            "-asin(z)",
+            "acos(z)",
+            "-atan(z)",
+            "-sinh(z)",
+            "cosh(z)",
+            "-tanh(z)",
             "5/z",
             "z^(-7)",
             "(1-z+6z^3-6sin(z))/(5*z - log(1/z))",
@@ -101,6 +109,18 @@ namespace CoreTests
             Assert.AreEqual(original.ToString(), reverted.ToString());
         }
 
+        [TestCaseSource(nameof(SampleData))]
+        public void CanGenerateNewtonFunction(string expression)
+        {
+            var baseElement = MathElement.Parse(expression);
+            
+            // Making sure the base function can be created, since we are on it
+            baseElement.ToFunc();
+
+            var newtonElement = baseElement.ToNewtonFunction(Complex.One);
+            newtonElement.ToFunc();
+        }
+        
         [TestCase("1*z*3*2", ExpectedResult = "(6)*(z)")]
         [TestCase("5+z-7", ExpectedResult = "-2+z")]
         [TestCase("1-2-3", ExpectedResult = "-4")]
