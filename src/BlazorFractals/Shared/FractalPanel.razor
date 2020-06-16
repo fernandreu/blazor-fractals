@@ -234,8 +234,18 @@
         _cancellation?.Dispose();
         _cancellation = null;
         
-        var content = await response.Content.ReadAsStringAsync();
-        _imageSource = content;
+        var result = await response.Content.ReadFromJsonAsync<FunctionResult>();
+
+        if (string.IsNullOrEmpty(result.ErrorMessage))
+        {
+            _imageSource = result.ImageSource;
+        }
+        else
+        {
+            _errorMessage = result.ErrorMessage;
+            _imageSource = null;
+        }
+        
         _isGenerating = false;
         StateHasChanged();
     }
