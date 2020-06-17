@@ -1,4 +1,5 @@
-﻿using SixLabors.ImageSharp.ColorSpaces;
+﻿using System.Collections.Generic;
+using SixLabors.ImageSharp.ColorSpaces;
 
 namespace ApplicationCore.Helpers
 {
@@ -9,5 +10,7 @@ namespace ApplicationCore.Helpers
         public double MeanIterations { get; set; }
         
         public double StDevIterations { get; set; }
+        
+        public ICollection<HsvColorSpec> ColorSpecs { get; set; }
     }
 }

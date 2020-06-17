@@ -1,4 +1,5 @@
-﻿using SixLabors.ImageSharp.ColorSpaces;
+﻿using System.Collections.Generic;
+using SixLabors.ImageSharp.ColorSpaces;
 
 namespace ApplicationCore.Helpers
 {
@@ -19,5 +20,7 @@ namespace ApplicationCore.Helpers
         public int Threshold { get; set; }
         
         public Hsv FillColor { get; set; } = new Hsv(0, 0, 0);
+        
+        public ICollection<HexColorSpec> ColorSpecs { get; set; }
     }
 }
