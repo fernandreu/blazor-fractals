@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using ApplicationCore.Extensions;
 using ApplicationCore.Helpers;
 using ApplicationCore.Maths;
 using ApplicationCore.Media;
@@ -34,6 +36,7 @@ namespace Function
                 var response = new FunctionResult
                 {
                     ImageSource = webImage.Source,
+                    ColorSpecs = fractal.ColorSpecs.AsHexSpecs().ToList(),
                 };
 
                 return new OkObjectResult(response);

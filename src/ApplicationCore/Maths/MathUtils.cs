@@ -228,8 +228,7 @@ namespace ApplicationCore.Maths
             // Stored as a double to avoid castings later
             double totalPoints = options.PixelSize.Width * options.PixelSize.Height;
 
-            var colors = new List<Hsv>();
-            var roots = new List<Complex>();
+            var specs = new List<HsvColorSpec>(options.ColorSpecs ?? Enumerable.Empty<HsvColorSpec>());
 
             var logT = MathF.Log((float) options.Precision);
             
@@ -255,37 +254,32 @@ namespace ApplicationCore.Maths
                         continue;
                     }
 
-                    var found = FindRoot(roots, solution.Solution, options.Precision * 10);
-                    Complex foundRoot;
-                    Hsv color;
-                    if (found == null)
+                    var spec = FindSpec(specs, solution.Solution, options.Precision * 10);
+                    if (spec == null)
                     {
-                        foundRoot = solution.Solution;
-                        roots.Add(solution.Solution);
-                        color = new Hsv(rnd.NextFloat() * 360F, 1F, 1F);
-                        colors.Add(color);
-                    }
-                    else
-                    {
-                        foundRoot = found.Value.root;
-                        color = colors[found.Value.index];
+                        spec = new HsvColorSpec
+                        {
+                            Root = solution.Solution,
+                            Color = new Hsv(rnd.NextFloat() * 360f, 1f, options.Depth < 0 ? 0.5f : 1f),
+                        };
+                        specs.Add(spec);
                     }
 
                     if (options.Depth == 0)
                     {
-                        result.Contents[px, py] = color;
+                        result.Contents[px, py] = spec.Color;
                         continue;
                     }
 
-                    var logD0 = MathF.Log((float) Complex.Abs(solution.PreviousSolution - foundRoot));
-                    var logD1 = MathF.Log((float) Complex.Abs(solution.Solution - foundRoot));
-                    var value = color.V;
+                    var logD0 = MathF.Log((float) Complex.Abs(solution.PreviousSolution - spec.Root));
+                    var logD1 = MathF.Log((float) Complex.Abs(solution.Solution - spec.Root));
+                    var value = spec.Color.V;
                     
                     if (solution.Iterations > options.Threshold)
                     {
                         if (options.Gradient == 0)
                         {
-                            var factor = (solution.Iterations - 1 - options.Threshold) * options.Depth * 0.01F;
+                            var factor = (solution.Iterations - 1 - options.Threshold) * options.Depth * 0.01f;
                             if (options.Depth > 0)
                             {
                                 value /= 1 + factor;
@@ -297,8 +291,8 @@ namespace ApplicationCore.Maths
                         }
                         else
                         {
-                            var factor = (solution.Iterations - 1 - options.Threshold) * options.Depth * 0.01F;
-                            var factorPlus = (solution.Iterations - options.Threshold) * options.Depth * 0.01F;
+                            var factor = (solution.Iterations - 1 - options.Threshold) * options.Depth * 0.01f;
+                            var factorPlus = (solution.Iterations - options.Threshold) * options.Depth * 0.01f;
                             float lowValue;
                             float highValue;
                             if (options.Depth > 0)
@@ -324,7 +318,7 @@ namespace ApplicationCore.Maths
                     }
 
                     value = MathF.Max(0.025F, MathF.Min(0.975F, value));
-                    result.Contents[px, py] = new Hsv(color.H, color.S, value);
+                    result.Contents[px, py] = new Hsv(spec.Color.H, spec.Color.S, value);
                 }
             }
 
@@ -333,13 +327,13 @@ namespace ApplicationCore.Maths
             return result;
         }
 
-        private static (Complex root, int index)? FindRoot(IEnumerable<Complex> list, Complex root, double precision)
+        private static HsvColorSpec FindSpec(IEnumerable<HsvColorSpec> list, Complex root, double precision)
         {
             foreach (var (item, index) in list.Enumerated())
             {
-                if (Complex.Abs(item - root) < precision)
+                if (Complex.Abs(item.Root - root) < precision)
                 {
-                    return (item, index);
+                    return item;
                 }
             }
 
