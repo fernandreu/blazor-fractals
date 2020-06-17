@@ -6,6 +6,7 @@
 @using System.Numerics
 @using System.Threading
 @using ApplicationCore.Exceptions
+@using ApplicationCore.Extensions
 @inject HttpClient Http
 
 <div class="container">
@@ -105,7 +106,51 @@
                     <small class="form-text text-muted">Factor to smoothen depth boundaries</small>
                 </div>
             </div>
+            
+            <div class="card card-body mb-4">
+                <div class="row">
+                    <h5 class="card-title col-md-4">Predefined colors</h5>
+                    <div class="col-md-8 text-right">
+                        <button class="btn btn-info" type="button" @onclick="AddColorSpec">Add color</button>
+                        <button class="btn btn-info" type="button" @onclick="LoadSpecs">Load from last result</button>
+                        <button class="btn btn-info" type="button" @onclick="ClearAllColorSpecs">Clear all</button>
+                    </div>
+                </div>
+                <p class="card-text mt-2">
+                    This list defines the colors to be used for each root found when generating the fractal image.
+                    If a specific root does not appear in this list, a random color will be assigned.
+                </p>
+                <p class="card-text">
+                    Specifying a root manually might cause issues due to the precision needed. To ensure these are 
+                    specified correctly, it is recommended to generate a temporary fractal first, load the roots / 
+                    colors from that result, and then ajust the colors accordingly.
+                </p>
+                @foreach (var spec in _options.ColorSpecs)
+                {
+                    <div class="row">
+                        <div class="form-group col-md-5">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Real Part" @bind="spec.Real"/>
+                                <div class="input-group-prepend"><div class="input-group-text">+</div></div>
+                                <input type="text" class="form-control" placeholder="Imaginary Part" @bind="spec.Imaginary"/>
+                                <div class="input-group-append"><div class="input-group-text">i</div></div>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-5">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">@spec.Color</div></div>
+                                <input type="color" class="form-control" placeholder="Background color" @bind="spec.Color"/>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-2 text-right">
+                            <button class="btn btn-danger" type="button" @onclick="() => DeleteSpec(spec)">Delete</button>
+                        </div>
+                    </div>
+                }
+            </div>
         </fieldset>
+        
         @if (_isGenerating)
         {
             <div class="form-row">
@@ -161,6 +206,7 @@
         Expression = "z^3+1",
         Depth = 15,
         Gradient = 0.25f,
+        ColorSpecs = new List<HexColorSpec>(),
     };
 
     private bool _executeLocally = true;
@@ -176,6 +222,8 @@
     private string _errorMessage;
     
     private string _imageSource;
+
+    private ICollection<HexColorSpec> _resultSpecs;
 
     private async Task GenerateImageAsync()
     {
@@ -193,9 +241,10 @@
             _errorMessage = $"Parse error: {ex.Message}";
             _parsedExpression = null;
             _imageSource = null;
+            _resultSpecs = null;
             return;
         }
-        
+
         _options.Multiplicity = new Complex(_multiplicityReal, _multiplicityImaginary);
 
         var converter = new ColorSpaceConverter();
@@ -221,6 +270,7 @@
         await Task.Yield();
         var webImage = image.ToWebImage();
         _imageSource = webImage.Source;
+        _resultSpecs = fractal.ColorSpecs.AsHexSpecs().ToList();
         _isGenerating = false;
     }
 
@@ -239,11 +289,13 @@
         if (string.IsNullOrEmpty(result.ErrorMessage))
         {
             _imageSource = result.ImageSource;
+            _resultSpecs = result.ColorSpecs;
         }
         else
         {
             _errorMessage = result.ErrorMessage;
             _imageSource = null;
+            _resultSpecs = null;
         }
         
         _isGenerating = false;
@@ -256,6 +308,39 @@
         _cancellation?.Dispose();
         _cancellation = null;
         _isGenerating = false;
+        StateHasChanged();
+    }
+
+    private void AddColorSpec()
+    {
+        var rnd = new Random();
+        _options.ColorSpecs.Add(new HexColorSpec
+        {
+            Color = $"#{rnd.NextByte():x2}{rnd.NextByte():x2}{rnd.NextByte():x2}",
+        });
+        StateHasChanged();
+    }
+
+    private void ClearAllColorSpecs()
+    {
+        _options.ColorSpecs.Clear();
+        StateHasChanged();
+    }
+
+    private void LoadSpecs()
+    {
+        _options.ColorSpecs.Clear();
+        foreach (var spec in _resultSpecs ?? Enumerable.Empty<HexColorSpec>())
+        {
+            _options.ColorSpecs.Add(spec);
+        }
+        
+        StateHasChanged();
+    }
+
+    private void DeleteSpec(HexColorSpec spec)
+    {
+        _options.ColorSpecs.Remove(spec);
         StateHasChanged();
     }
 }

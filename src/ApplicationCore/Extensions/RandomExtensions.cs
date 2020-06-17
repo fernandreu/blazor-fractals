@@ -9,7 +9,7 @@ namespace ApplicationCore.Extensions
         public static float NextFloat(this Random self)
             => (float) self.NextDouble();
 
-        public static float NextByte(this Random self)
+        public static byte NextByte(this Random self)
             => (byte) self.Next(256);
         
         public static Rgba32 NextRgba32(this Random self, bool alpha = false)

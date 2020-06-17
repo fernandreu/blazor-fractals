@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using ApplicationCore.Helpers;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.ColorSpaces;
@@ -20,7 +21,7 @@ namespace ApplicationCore.Extensions
             var converter = new ColorSpaceConverter();
             return self.Select(x => new HsvColorSpec
             {
-                Root = x.Root,
+                Root = new Complex(x.Real, x.Imaginary),
                 Color = converter.ToHsv(Rgba32.ParseHex(x.Color)),
             });
         }
@@ -31,10 +32,14 @@ namespace ApplicationCore.Extensions
             return self.Select(x =>
             {
                 var rgb = converter.ToRgb(x.Color);
+                var r = (byte) (rgb.R * 255);
+                var g = (byte) (rgb.G * 255);
+                var b = (byte) (rgb.B * 255);
                 return new HexColorSpec
                 {
-                    Root = x.Root,
-                    Color = $"#{rgb.R:X2}{rgb.G:X2}{rgb.B:X2}",
+                    Real = x.Root.Real,
+                    Imaginary = x.Root.Imaginary,
+                    Color = $"#{r:x2}{g:x2}{b:x2}",
                 };
             });
         }

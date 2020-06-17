@@ -5,7 +5,9 @@ namespace ApplicationCore.Helpers
 {
     public class HexColorSpec
     {
-        public Complex Root { get; set; }
+        public double Real { get; set; }
+        
+        public double Imaginary { get; set; }
         
         public string Color { get; set; }
     }

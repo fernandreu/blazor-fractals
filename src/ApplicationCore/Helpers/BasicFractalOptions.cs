@@ -21,6 +21,6 @@ namespace ApplicationCore.Helpers
         
         public Hsv FillColor { get; set; } = new Hsv(0, 0, 0);
         
-        public ICollection<HsvColorSpec> ColorSpecs { get; set; }
+        public ICollection<HexColorSpec> ColorSpecs { get; set; }
     }
 }

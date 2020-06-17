@@ -228,7 +228,7 @@ namespace ApplicationCore.Maths
             // Stored as a double to avoid castings later
             double totalPoints = options.PixelSize.Width * options.PixelSize.Height;
 
-            var specs = new List<HsvColorSpec>(options.ColorSpecs ?? Enumerable.Empty<HsvColorSpec>());
+            result.ColorSpecs = new List<HsvColorSpec>(options.ColorSpecs?.AsHsvSpecs() ?? Enumerable.Empty<HsvColorSpec>());
 
             var logT = MathF.Log((float) options.Precision);
             
@@ -254,15 +254,15 @@ namespace ApplicationCore.Maths
                         continue;
                     }
 
-                    var spec = FindSpec(specs, solution.Solution, options.Precision * 10);
+                    var spec = FindSpec(result.ColorSpecs, solution.Solution, options.Precision * 10);
                     if (spec == null)
                     {
                         spec = new HsvColorSpec
                         {
                             Root = solution.Solution,
-                            Color = new Hsv(rnd.NextFloat() * 360f, 1f, options.Depth < 0 ? 0.5f : 1f),
+                            Color = new Hsv(rnd.NextFloat() * 360f, 1f, options.Depth < 0 ? 0.1f : 1f),
                         };
-                        specs.Add(spec);
+                        result.ColorSpecs.Add(spec);
                     }
 
                     if (options.Depth == 0)
