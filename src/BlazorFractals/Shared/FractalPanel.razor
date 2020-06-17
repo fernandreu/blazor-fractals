@@ -7,7 +7,10 @@
 @using System.Threading
 @using ApplicationCore.Exceptions
 @using ApplicationCore.Extensions
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Primitives
 @inject HttpClient Http
+@inject NavigationManager NavigationManager
 
 <div class="container">
 
@@ -178,6 +181,12 @@
                 <p class="card-text">
                     <b>Parsed expression:</b> @_parsedExpression
                 </p>
+                @if (_uri != null)
+                {
+                    <p class="card-text">
+                        <b>Full URL:</b> @_uri
+                    </p>
+                }
             </div>
             @if (_imageSource != null)
             {
@@ -186,7 +195,6 @@
         </div>
     }
 </div>
-
 
 @code
 {
@@ -223,7 +231,102 @@
     
     private string _imageSource;
 
+    private string _uri;
+    
     private ICollection<HexColorSpec> _resultSpecs;
+
+    protected override void OnInitialized()
+    {
+        ParseUri();
+    }
+
+    private void ParseUri()
+    {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        var dict = QueryHelpers.ParseQuery(uri.Query);
+        if (dict.TryGetValue("expression", out var token))
+        {
+            _options.Expression = token.First();
+        }
+
+        if (dict.TryGetValue("m", out token))
+        {
+            var parts = token.First().Split(';');
+            
+            if (parts.Length > 0 && double.TryParse(parts[0], out var real))
+            {
+                _multiplicityReal = real;
+            }
+            
+            if (parts.Length > 1 && double.TryParse(parts[1], out var imaginary))
+            {
+                _multiplicityImaginary = imaginary;
+            }
+        }
+
+        if (dict.TryGetValue("size", out token))
+        {
+            var parts = token.First().Split(';');
+            if (parts.Length == 1 && int.TryParse(parts[0], out var size))
+            {
+                _options.PixelSize.Width = size;
+                _options.PixelSize.Height = size;
+            }
+            else if (parts.Length == 2 && int.TryParse(parts[0], out var width) && int.TryParse(parts[1], out var height))
+            {
+                _options.PixelSize.Width = width;
+                _options.PixelSize.Height = height;
+            }
+        }
+        
+        if (dict.TryGetValue("bounds", out token))
+        {
+            var parts = token.First().Split(';');
+            if (parts.Length == 4
+                && double.TryParse(parts[0], out var minX)
+                && double.TryParse(parts[1], out var maxX)
+                && double.TryParse(parts[2], out var minY)
+                && double.TryParse(parts[3], out var maxY))
+            {
+                _options.DomainSize.MinX = minX;
+                _options.DomainSize.MaxX = maxX;
+                _options.DomainSize.MinY = minY;
+                _options.DomainSize.MaxY = maxY;
+            }
+        }
+
+        ParseInt(dict, "iterations", x => _options.MaxIterations = x);
+        ParseDouble(dict, "precision", x => _options.Precision = x);
+        ParseFloat(dict, "depth", x => _options.Depth = x);
+        ParseInt(dict, "threshold", x => _options.Threshold = x);
+        ParseFloat(dict, "gradient", x => _options.Gradient = x);
+
+        StateHasChanged();
+    }
+    
+    private void GenerateUri()
+    {
+        var dict = new Dictionary<string, string>
+        {
+            ["expression"] = _options.Expression,
+            ["m"] = $"{_options.Multiplicity.Real};{_options.Multiplicity.Imaginary}",
+            ["size"] = $"{_options.PixelSize.Width};{_options.PixelSize.Height}",
+            ["bounds"] = $"{_options.DomainSize.MinX};{_options.DomainSize.MaxX};{_options.DomainSize.MinY};{_options.DomainSize.MaxY}",
+            ["iterations"] = $"{_options.MaxIterations}",
+            ["precision"] = $"{_options.Precision}",
+            ["depth"] = $"{_options.Depth}",
+            ["threshold"] = $"{_options.Threshold}",
+            ["gradient"] = $"{_options.Gradient}",
+        };
+        
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.BaseUri).ToString();
+        if (!uri.EndsWith("/"))
+        {
+            uri += "/";
+        }
+        
+        _uri = QueryHelpers.AddQueryString(uri, dict);
+    }
 
     private async Task GenerateImageAsync()
     {
@@ -258,6 +361,8 @@
         {
             await GenerateInFunction();
         }
+        
+        GenerateUri();
     }
 
     private async Task GenerateLocally()
@@ -342,5 +447,50 @@
     {
         _options.ColorSpecs.Remove(spec);
         StateHasChanged();
+    }
+
+    private static void ParseInt(IDictionary<string, StringValues> dict, string key, Action<int> action)
+    {
+        if (!dict.TryGetValue(key, out var token))
+        {
+            return;
+        }
+
+        if (!int.TryParse(token.First(), out var i))
+        {
+            return;
+        }
+
+        action(i);
+    }
+    
+    private static void ParseDouble(IDictionary<string, StringValues> dict, string key, Action<double> action)
+    {
+        if (!dict.TryGetValue(key, out var token))
+        {
+            return;
+        }
+
+        if (!double.TryParse(token.First(), out var d))
+        {
+            return;
+        }
+
+        action(d);
+    }
+    
+    private static void ParseFloat(IDictionary<string, StringValues> dict, string key, Action<float> action)
+    {
+        if (!dict.TryGetValue(key, out var token))
+        {
+            return;
+        }
+
+        if (!float.TryParse(token.First(), out var d))
+        {
+            return;
+        }
+
+        action(d);
     }
 }
