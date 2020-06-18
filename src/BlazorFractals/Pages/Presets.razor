@@ -6,16 +6,26 @@
             <th>Thumbnail</th>
             <th>Expression</th>
             <th>Settings</th>
-            <th>Link</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var preset in _presets)
         {
             <tr>
-                <td><img width="100" height="100" src="@preset.Screenshot" alt="@preset.Expression"/></td>
+                <td><img width="150" height="150" src="@preset.Screenshot" alt="@preset.Expression"/></td>
                 <td><code>@preset.Expression</code></td>
-                <td>@preset.Settings</td>
+                <td>
+                    @if (preset.Settings != null)
+                    {
+                        <ul class="px-1">
+                            @foreach (var setting in preset.Settings)
+                            {
+                                <li>@setting</li>
+                            }
+                        </ul>
+                    }
+                </td>
                 <td><NavLink class="btn btn-primary" href="@preset.Link">Open in editor</NavLink></td>
             </tr>
         }
@@ -28,7 +38,7 @@
     {
         public string Expression { get; set; }
         
-        public string Settings { get; set; }
+        public string[] Settings { get; set; }
         
         public string Screenshot { get; set; }
         
@@ -40,30 +50,67 @@
         new Preset
         {
             Expression = "z^3+1",
-            Settings = "Default",
             Screenshot = "img/Screen1.png",
             Link = "?expression=z%5E3%2B1",
         },
         new Preset
         {
             Expression = "(z^3+z+1)/(z^2+1)",
-            Settings = "Bounds from -3 to 3",
+            Settings = new[] { "Bounds: -3 to 3" },
             Screenshot = "img/Screen2.png",
             Link = "?expression=(z%5E3%2Bz%2B1)%2F(z%5E2%2B1)&bounds=-3;3;-3;3",
         },
         new Preset
         {
             Expression = "z^3+z^2+1",
-            Settings = "Default",
             Screenshot = "img/Screen3.png",
             Link = "?expression=z%5E3%2Bz%5E2%2B1",
         },
         new Preset
         {
             Expression = "1+sinh(z^2)",
-            Settings = "Default",
             Screenshot = "img/Screen4.png",
             Link = "?expression=1%2Bsinh(z%5E2)",
+        },
+        new Preset
+        {
+            Expression = "sinh(z)/(z+1)",
+            Settings = new[]
+            {
+                "Bounds: -2 to 2",
+                "Gradient: 0.05",
+            },
+            Screenshot = "img/Screen5.png",
+            Link = "?expression=sinh(z)%2F(z%2B1)&bounds=-2;2;-2;2&gradient=0.05",
+        },
+        new Preset
+        {
+            Expression = "z^3+1",
+            Settings = new[]
+            {
+                "Multiplicity: 1+0.9i",
+                "Bounds: -10 to 10",
+                "Max iterations: 200",
+                "Depth: 2",
+                "Threshold: 75",
+            },
+            Screenshot = "img/Screen6.png",
+            Link = "?expression=z%5E3%2B1&m=1;0.9&bounds=-10;10;-10;10&iterations=200&depth=2&threshold=75",
+        },
+        new Preset
+        {
+            Expression = "z^2-1",
+            Settings = new[]
+            {
+                "Multiplicity: 0.975+0.975i",
+                "Bounds: -3.5 to 3.5",
+                "Max iterations: 600",
+                "Depth: 1",
+                "Threshold: 300",
+                "Gradient: 0",
+            },
+            Screenshot = "img/Screen7.png",
+            Link = "?expression=z%5E2-1&m=0.975;0.975&bounds=-3.5;3.5;-3.5;3.5&iterations=600&depth=1&threshold=300&gradient=0",
         },
     };
 }
