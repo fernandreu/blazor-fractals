@@ -1,0 +1,69 @@
+﻿@page "/presets"
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Thumbnail</th>
+            <th>Expression</th>
+            <th>Settings</th>
+            <th>Link</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var preset in _presets)
+        {
+            <tr>
+                <td><img width="100" height="100" src="@preset.Screenshot" alt="@preset.Expression"/></td>
+                <td><code>@preset.Expression</code></td>
+                <td>@preset.Settings</td>
+                <td><NavLink class="btn btn-primary" href="@preset.Link">Open in editor</NavLink></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+
+    private class Preset
+    {
+        public string Expression { get; set; }
+        
+        public string Settings { get; set; }
+        
+        public string Screenshot { get; set; }
+        
+        public string Link { get; set; }
+    }
+    
+    private readonly List<Preset> _presets = new List<Preset>
+    {
+        new Preset
+        {
+            Expression = "z^3+1",
+            Settings = "Default",
+            Screenshot = "img/Screen1.png",
+            Link = "?expression=z%5E3%2B1",
+        },
+        new Preset
+        {
+            Expression = "(z^3+z+1)/(z^2+1)",
+            Settings = "Bounds from -3 to 3",
+            Screenshot = "img/Screen2.png",
+            Link = "?expression=(z%5E3%2Bz%2B1)%2F(z%5E2%2B1)&bounds=-3;3;-3;3",
+        },
+        new Preset
+        {
+            Expression = "z^3+z^2+1",
+            Settings = "Default",
+            Screenshot = "img/Screen3.png",
+            Link = "?expression=z%5E3%2Bz%5E2%2B1",
+        },
+        new Preset
+        {
+            Expression = "1+sinh(z^2)",
+            Settings = "Default",
+            Screenshot = "img/Screen4.png",
+            Link = "?expression=1%2Bsinh(z%5E2)",
+        },
+    };
+}
