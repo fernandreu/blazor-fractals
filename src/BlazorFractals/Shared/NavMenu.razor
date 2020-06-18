@@ -18,20 +18,20 @@
             </NavLink>
         </li>
         <li class="nav-item px-3">
-            <a class="nav-link btn btn-outline-danger" href="https://github.com/fernandreu/blazor-fractals">
+            <NavLink class="nav-link btn btn-light" href="https://github.com/fernandreu/blazor-fractals">
                 View source on GitHub
-            </a>
+            </NavLink>
         </li>
     </ul>
 </div>
 
 @code {
-    private bool collapseNavMenu = true;
+    private bool _collapseNavMenu = true;
 
-    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private string NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
 
     private void ToggleNavMenu()
     {
-        collapseNavMenu = !collapseNavMenu;
+        _collapseNavMenu = !_collapseNavMenu;
     }
 }
