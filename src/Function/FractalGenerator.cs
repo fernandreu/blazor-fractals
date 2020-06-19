@@ -23,6 +23,8 @@ namespace Function
             ILogger log)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
+            
+            log.LogInformation($"Processor count: {Environment.ProcessorCount}");
 
             var content = await new StreamReader(req.Body).ReadToEndAsync();
 
