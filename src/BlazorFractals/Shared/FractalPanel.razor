@@ -369,7 +369,7 @@
     {
         _isGenerating = true;
         await Task.Yield();
-        var fractal = MathUtils.Fractal(_options);
+        var fractal = await MathUtils.FractalAsync(_options);
         await Task.Yield();
         var image = ImageUtils.GenerateImage(fractal.Contents);
         await Task.Yield();

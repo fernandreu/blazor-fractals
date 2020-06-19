@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Numerics;
+using System.Threading.Tasks;
 using ApplicationCore.Helpers;
 using ApplicationCore.Maths;
 using ApplicationCore.Media;
@@ -24,7 +25,7 @@ namespace CoreTests
         }
 
         [Test]
-        public void CanCreateFullFractal()
+        public async Task CanCreateFullFractal()
         {
             var options = new ExtendedFractalOptions
             {
@@ -34,11 +35,11 @@ namespace CoreTests
                 MaxIterations = 50,
                 Precision = 1e-5,
                 FillColor = new Hsv(0, 0, 0),
-                Depth = 0,
-                Gradient = 0,
+                Depth = 15,
+                Gradient = 0.25f,
             };
 
-            var result = MathUtils.Fractal(options);
+            var result = await MathUtils.FractalAsync(options);
 
             var image = ImageUtils.GenerateImage(result.Contents);
             var path = Path.Combine(Directory.GetCurrentDirectory(), "Fractal.png");

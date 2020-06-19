@@ -30,7 +30,7 @@ namespace Function
             {
                 var options = JsonConvert.DeserializeObject<ExtendedFractalOptions>(content);
 
-                var fractal = MathUtils.Fractal(options);
+                var fractal = await MathUtils.FractalAsync(options);
                 var image = ImageUtils.GenerateImage(fractal.Contents);
                 var webImage = image.ToWebImage();
                 var response = new FunctionResult

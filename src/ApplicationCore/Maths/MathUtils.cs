@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using ApplicationCore.Exceptions;
 using ApplicationCore.Extensions;
 using ApplicationCore.Helpers;
@@ -209,14 +211,61 @@ namespace ApplicationCore.Maths
             return result;
         }
 
-        public static FractalResult Fractal(ExtendedFractalOptions options)
+        private static async Task<NewtonResult[]> NewtonBandAsync(
+            Func<Complex, Complex> func,
+            BasicFractalOptions options, 
+            int px,
+            SemaphoreSlim semaphore)
+        {
+            await semaphore.WaitAsync();
+
+            try
+            {
+                return await Task.Run(() => NewtonBandInternal(func, options, px));
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        }
+
+        private static NewtonResult[] NewtonBandInternal(Func<Complex, Complex> func, BasicFractalOptions options, int px)
+        {
+            var x = options.DomainSize.MinX + (options.DomainSize.MaxX - options.DomainSize.MinX) * px / (options.PixelSize.Width - 1);
+            var result = new NewtonResult[options.PixelSize.Height];
+            for (var py = 0; py < options.PixelSize.Height; ++py)
+            {
+                var y = options.DomainSize.MaxY - (options.DomainSize.MaxY - options.DomainSize.MinY) * py / (options.PixelSize.Height - 1);
+                var newtonOptions = new NewtonOptions
+                {
+                    Precision = options.Precision,
+                    StartingPoint = new Complex(x, y),
+                    MaxIterations = options.MaxIterations,
+                };
+                result[py] = NewtonMethod(func, newtonOptions);
+            }
+
+            return result;
+        }
+        
+        private static Task<NewtonResult[][]> NewtonArrayAsync(Func<Complex, Complex> func, BasicFractalOptions options)
+        {
+            var semaphore = new SemaphoreSlim(Environment.ProcessorCount, Environment.ProcessorCount);
+            var tasks = Enumerable
+                .Range(0, options.PixelSize.Width)
+                .Select(px => NewtonBandAsync(func, options, px, semaphore));
+
+            return Task.WhenAll(tasks);
+        }
+        
+        public static Task<FractalResult> FractalAsync(ExtendedFractalOptions options)
         {
             var element = MathElement.Parse(options.Expression, options.VariableName);
             var func = element.ToNewtonFunction(options.Multiplicity).ToFunc();
-            return Fractal(func, options);
+            return FractalAsync(func, options);
         }
         
-        public static FractalResult Fractal(Func<Complex, Complex> func, BasicFractalOptions options)
+        public static async Task<FractalResult> FractalAsync(Func<Complex, Complex> func, BasicFractalOptions options)
         {
             var result = new FractalResult
             {
@@ -231,20 +280,14 @@ namespace ApplicationCore.Maths
             result.ColorSpecs = new List<HsvColorSpec>(options.ColorSpecs?.AsHsvSpecs() ?? Enumerable.Empty<HsvColorSpec>());
 
             var logT = MathF.Log((float) options.Precision);
-            
+
+            var solutions = await NewtonArrayAsync(func, options);
+
             for (var px = 0; px < options.PixelSize.Width; ++px)
             {
-                var x = options.DomainSize.MinX + (options.DomainSize.MaxX - options.DomainSize.MinX) * px / (options.PixelSize.Width - 1);
                 for (var py = 0; py < options.PixelSize.Height; ++py)
                 {
-                    var y = options.DomainSize.MaxY - (options.DomainSize.MaxY - options.DomainSize.MinY) * py / (options.PixelSize.Height - 1);
-                    var newtonOptions = new NewtonOptions
-                    {
-                        Precision = options.Precision,
-                        StartingPoint = new Complex(x, y),
-                        MaxIterations = options.MaxIterations,
-                    };
-                    var solution = NewtonMethod(func, newtonOptions);
+                    var solution = solutions[px][py];
                     result.MeanIterations += solution.Iterations / totalPoints;
                     result.StDevIterations += solution.Iterations * solution.Iterations / totalPoints;
 
