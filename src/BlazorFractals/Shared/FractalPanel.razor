@@ -7,6 +7,7 @@
 @using System.Threading
 @using ApplicationCore.Exceptions
 @using ApplicationCore.Extensions
+@using ApplicationCore.Fractals
 @using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.Extensions.Primitives
 @inject HttpClient Http
@@ -198,18 +199,18 @@
 
 @code
 {
-    private const string FunctionUrl = 
+    private const string RootUrl = 
 #if DEBUG
-        @"http://localhost:7071/api/FractalGenerator";
+        @"http://localhost:7071/api/";
 #else
-        @"https://fractalgenerator.azurewebsites.net/api/FractalGenerator";
+        @"https://fractalgenerator.azurewebsites.net/api/";
 #endif
 
     private bool _isGenerating = false;
 
     private CancellationTokenSource _cancellation;
     
-    private ExtendedFractalOptions _options = new ExtendedFractalOptions
+    private FractalOptions _options = new FractalOptions
     {
         Expression = "z^3+1",
         Depth = 15,
@@ -368,8 +369,9 @@
     private async Task GenerateLocally()
     {
         _isGenerating = true;
+        var generator = new LocalFractalGenerator(_options);
         await Task.Yield();
-        var fractal = await MathUtils.FractalAsync(_options);
+        var fractal = await generator.GenerateAsync();
         await Task.Yield();
         var image = ImageUtils.GenerateImage(fractal.Contents);
         await Task.Yield();
@@ -385,10 +387,10 @@
         _isGenerating = true;
         StateHasChanged();
         
-        var response = await Http.PostAsJsonAsync(FunctionUrl, _options, _cancellation.Token);
+        var response = await Http.PostAsJsonAsync($"{RootUrl}RunOrchestrated", _options, _cancellation.Token);
         _cancellation?.Dispose();
         _cancellation = null;
-        
+
         var result = await response.Content.ReadFromJsonAsync<FunctionResult>();
 
         if (string.IsNullOrEmpty(result.ErrorMessage))

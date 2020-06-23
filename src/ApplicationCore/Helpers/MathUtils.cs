@@ -7,8 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using ApplicationCore.Exceptions;
 using ApplicationCore.Extensions;
+using ApplicationCore.Fractals;
 using ApplicationCore.Maths;
-using ApplicationCore.Strategies;
 using SixLabors.ImageSharp.ColorSpaces;
 
 namespace ApplicationCore.Helpers
@@ -208,133 +208,6 @@ namespace ApplicationCore.Helpers
             result.Solution = newPoint;
             result.PreviousSolution = previousPoints.Item2;
             return result;
-        }
-
-        public static Task<FractalResult> FractalAsync(ExtendedFractalOptions options, IParallelStrategy strategy = null)
-        {
-            var element = MathElement.Parse(options.Expression, options.VariableName);
-            var func = element.ToNewtonFunction(options.Multiplicity).ToFunc();
-            return FractalAsync(func, options, strategy);
-        }
-        
-        public static async Task<FractalResult> FractalAsync(Func<Complex, Complex> func, BasicFractalOptions options, IParallelStrategy strategy = null)
-        {
-            strategy ??= new LocalStrategy();
-            
-            var result = new FractalResult
-            {
-                Contents = new Hsv[options.PixelSize.Width, options.PixelSize.Height],
-            };
-            
-            var rnd = new Random();
-            
-            // Stored as a double to avoid castings later
-            double totalPoints = options.PixelSize.Width * options.PixelSize.Height;
-
-            result.ColorSpecs = new List<HsvColorSpec>(options.ColorSpecs?.AsHsvSpecs() ?? Enumerable.Empty<HsvColorSpec>());
-
-            var logT = MathF.Log((float) options.Precision);
-
-            var solutions = await strategy.NewtonArrayAsync(func, options);
-
-            for (var px = 0; px < options.PixelSize.Width; ++px)
-            {
-                for (var py = 0; py < options.PixelSize.Height; ++py)
-                {
-                    var solution = solutions[px][py];
-                    result.MeanIterations += solution.Iterations / totalPoints;
-                    result.StDevIterations += solution.Iterations * solution.Iterations / totalPoints;
-
-                    if (solution.Status != SolutionStatus.Found)
-                    {
-                        result.Contents[px, py] = options.FillColor;
-                        continue;
-                    }
-
-                    var spec = FindSpec(result.ColorSpecs, solution.Solution, options.Precision * 10);
-                    if (spec == null)
-                    {
-                        spec = new HsvColorSpec
-                        {
-                            Root = solution.Solution,
-                            Color = new Hsv(rnd.NextFloat() * 360f, 1f, options.Depth < 0 ? 0.1f : 1f),
-                        };
-                        result.ColorSpecs.Add(spec);
-                    }
-
-                    if (options.Depth == 0)
-                    {
-                        result.Contents[px, py] = spec.Color;
-                        continue;
-                    }
-
-                    var logD0 = MathF.Log((float) Complex.Abs(solution.PreviousSolution - spec.Root));
-                    var logD1 = MathF.Log((float) Complex.Abs(solution.Solution - spec.Root));
-                    var value = spec.Color.V;
-                    
-                    if (solution.Iterations > options.Threshold)
-                    {
-                        if (options.Gradient == 0)
-                        {
-                            var factor = (solution.Iterations - 1 - options.Threshold) * options.Depth * 0.01f;
-                            if (options.Depth > 0)
-                            {
-                                value /= 1 + factor;
-                            }
-                            else
-                            {
-                                value += (1 - value) * (1 - 1 / (1 - factor));
-                            }
-                        }
-                        else
-                        {
-                            var factor = (solution.Iterations - 1 - options.Threshold) * options.Depth * 0.01f;
-                            var factorPlus = (solution.Iterations - options.Threshold) * options.Depth * 0.01f;
-                            float lowValue;
-                            float highValue;
-                            if (options.Depth > 0)
-                            {
-                                lowValue = value / (1 + factor);
-                                highValue = value / (1 + factorPlus);
-                            }
-                            else
-                            {
-                                lowValue = value + (1 - value) * (1 - 1 / (1 - factor));
-                                highValue = value + (1 - value) * (1 - 1 / (1 - factorPlus));
-                            }
-
-                            if (Math.Abs(logD1 - logD0) < 0.001)
-                            {
-                                value = highValue;
-                            }
-                            else
-                            {
-                                value = highValue + options.Gradient * (highValue - lowValue) * (logT - logD0) / (logD1 - logD0);
-                            }
-                        }
-                    }
-
-                    value = MathF.Max(0.025F, MathF.Min(0.975F, value));
-                    result.Contents[px, py] = new Hsv(spec.Color.H, spec.Color.S, value);
-                }
-            }
-
-            result.StDevIterations = Math.Sqrt(result.StDevIterations - result.MeanIterations * result.MeanIterations);
-            
-            return result;
-        }
-
-        private static HsvColorSpec FindSpec(IEnumerable<HsvColorSpec> list, Complex root, double precision)
-        {
-            foreach (var (item, index) in list.Enumerated())
-            {
-                if (Complex.Abs(item.Root - root) < precision)
-                {
-                    return item;
-                }
-            }
-
-            return null;
         }
     }
 }
