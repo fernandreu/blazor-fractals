@@ -153,6 +153,23 @@
                     </div>
                 }
             </div>
+            
+            <div class="form-row">
+                <div class="form-group col-md-12">
+                    <label for="inputExecution">Execution method</label>
+                    <select class="form-control" id="inputExecution" @bind="_executionMethod">
+                        <option value="0">A: Execute in browser locally</option>
+                        <option value="1">B: Run in single remote machine using Azure Functions</option>
+                        <option value="2">C: Run in parallel remotely using Azure Durable Functions</option>
+                    </select>
+                    <small class="form-text text-muted">
+                        Method A is signifcantly slow but does not depend on a server. Method B introduces a bit of 
+                        overhead due to the remote function call / results collection. Method C has significantly more
+                        overhead, but this can be negligible for complex fractals when compared to the parallelization
+                        benefits
+                    </small>
+                </div>
+            </div>
         </fieldset>
         
         @if (_isGenerating)
@@ -165,11 +182,7 @@
         else
         {
             <div class="form-row">
-                <div class="form-text col-md-8" style="color: red; font-weight: bold;">@_errorMessage</div>
-                <div class="form-check col-md-2">
-                    <input class="form-check-input" type="checkbox" id="inputLocally" @bind="_executeLocally">
-                    <label class="form-check-label" for="inputLocally">Run on browser</label>
-                </div>
+                <div class="form-text col-md-10" style="color: red; font-weight: bold;">@_errorMessage</div>
                 <button class="btn btn-primary col-md-2" type="button" @onclick="GenerateImageAsync">Generate</button>
             </div>
         }
@@ -218,7 +231,7 @@
         ColorSpecs = new List<HexColorSpec>(),
     };
 
-    private bool _executeLocally = true;
+    private int _executionMethod = 0;
     
     private double _multiplicityReal = 1;
 
@@ -354,13 +367,18 @@
         var converter = new ColorSpaceConverter();
         _options.FillColor = converter.ToHsv(Rgba32.ParseHex(_color));
 
-        if (_executeLocally)
+        Console.WriteLine($"Method: {_executionMethod}");
+        switch (_executionMethod)
         {
-            await GenerateLocally();
-        }
-        else
-        {
-            await GenerateInFunction();
+            case 1:
+                await GenerateInFunction(false);
+                break;
+            case 2:
+                await GenerateInFunction(true);
+                break;
+            default:
+                await GenerateLocally();
+                break;
         }
         
         GenerateUri();
@@ -381,13 +399,14 @@
         _isGenerating = false;
     }
 
-    private async Task GenerateInFunction()
+    private async Task GenerateInFunction(bool orchestrated)
     {
         _cancellation = new CancellationTokenSource();
         _isGenerating = true;
         StateHasChanged();
-        
-        var response = await Http.PostAsJsonAsync($"{RootUrl}RunOrchestrated", _options, _cancellation.Token);
+
+        var uri = orchestrated ? $"{RootUrl}RunOrchestrated" : $"{RootUrl}RunLocally";
+        var response = await Http.PostAsJsonAsync(uri, _options, _cancellation.Token);
         _cancellation?.Dispose();
         _cancellation = null;
 
