@@ -15,7 +15,7 @@ namespace FunctionTests
         [Test]
         public async Task CanGenerateFractalAsync()
         {
-            var options = new ExtendedFractalOptions
+            var options = new FractalOptions
             {
                 Expression = "z^3+1",
             };
@@ -30,7 +30,7 @@ namespace FunctionTests
         [TestCase("sin()")]
         public async Task CanDetectParseErrors(string expression)
         {
-            var options = new ExtendedFractalOptions
+            var options = new FractalOptions
             {
                 Expression = expression,
             };
@@ -39,10 +39,10 @@ namespace FunctionTests
             Assert.NotNull(result.ErrorMessage);
         }
         
-        private async Task<FunctionResult> CallFunction(ExtendedFractalOptions options)
+        private async Task<FunctionResult> CallFunction(FractalOptions options)
         {
             var request = TestFactory.CreateHttpRequest(options);
-            var result = (OkObjectResult) await FractalGenerator.Run(request, _logger);
+            var result = (OkObjectResult) await EntryPoint.RunLocally(request, _logger);
             return (FunctionResult) result.Value;;
         }
     }

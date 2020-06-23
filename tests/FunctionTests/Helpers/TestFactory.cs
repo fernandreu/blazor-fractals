@@ -22,7 +22,7 @@ namespace FunctionTests.Helpers
             return qs;
         }
 
-        public static DefaultHttpRequest CreateHttpRequest(ExtendedFractalOptions options)
+        public static DefaultHttpRequest CreateHttpRequest(FractalOptions options)
         {
             var serialized = JsonConvert.SerializeObject(options);
             var bytes = Encoding.UTF8.GetBytes(serialized);

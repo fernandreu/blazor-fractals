@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Numerics;
 using System.Threading.Tasks;
+using ApplicationCore.Fractals;
 using ApplicationCore.Helpers;
 using ApplicationCore.Maths;
 using ApplicationCore.Media;
@@ -27,7 +28,7 @@ namespace CoreTests
         [Test]
         public async Task CanCreateFullFractal()
         {
-            var options = new ExtendedFractalOptions
+            var options = new FractalOptions
             {
                 Expression = "z^3+1",
                 PixelSize = new PixelSize(400, 400),
@@ -39,7 +40,8 @@ namespace CoreTests
                 Gradient = 0.25f,
             };
 
-            var result = await MathUtils.FractalAsync(options);
+            var generator = new LocalFractalGenerator(options);
+            var result = await generator.GenerateAsync();
 
             var image = ImageUtils.GenerateImage(result.Contents);
             var path = Path.Combine(Directory.GetCurrentDirectory(), "Fractal.png");

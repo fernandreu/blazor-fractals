@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Numerics;
 using ApplicationCore.Exceptions;
+using ApplicationCore.Helpers;
 
 namespace ApplicationCore.Maths
 {
@@ -75,12 +76,13 @@ namespace ApplicationCore.Maths
         /// <returns>The function generated</returns>
         public MathElement ToNewtonFunction(Complex multiplicity)
         {
-            return new SumElement(
+            var result = new SumElement(
                 new VariableElement(),
                 new ProductElement(
                     new ConstElement(-multiplicity),
                     new FractionElement(this, Derive()))
                 );
+            return result.Simplify();
         }
         
         public override string ToString() => ToString("z");
