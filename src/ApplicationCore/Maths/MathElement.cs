@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Numerics;
 using ApplicationCore.Exceptions;
+using ApplicationCore.Helpers;
 
 namespace ApplicationCore.Maths
 {
